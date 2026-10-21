@@ -123,6 +123,10 @@
     .item { display: block; padding: 14px 18px; border-bottom: 1px solid var(--line); }
     .item:last-child { border-bottom: 0; }
     .item:hover { background: var(--hover); }
+    .item.has-img { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .pic { aspect-ratio: 4 / 3; border-radius: 10px; background: #fff center / contain no-repeat; border: 1px solid var(--line); }
+    .item-main { min-width: 0; }
+    .pic.ph { background: var(--panel-2); display: grid; place-items: center; font-size: 34px; }
     .item-top { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
     .item-title { font-weight: 700; font-size: 14.5px; min-width: 0; }
     .item-title .brand { color: var(--accent); }
@@ -157,6 +161,7 @@
       .hero h1 { font-size: 22px; }
       .stat b { font-size: 20px; }
       .item { padding: 12px 14px; }
+      .item.has-img { grid-template-columns: 84px minmax(0, 1fr); gap: 12px; }
       .item-top { flex-direction: column; gap: 2px; }
       .item-foot .src { margin-left: 0; width: 100%; }
       .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
@@ -287,12 +292,17 @@
       if (brand && (x.product || '').startsWith(brand)) return `<span class="brand">${hl(x.product, terms)}</span>`;
       return `<span class="brand">${hl(brand, terms)}</span> ${hl(x.product, terms)}`;
     }
+    const CAT_ICON = { 儿童用品: '🧸', 玩具: '🪀', 家电: '🔌', 家居日用: '🏠', 服装鞋帽: '👕', 电动车: '🛵', 灯具电器件: '💡', 文具: '✏️',
+      户外运动: '🚴', 电子数码: '📱', 美妆个护: '🧴', 汽车用品: '🚗', 汽车: '🚗' };
     function recallCard(x, terms) {
       const auto = x.kind === 'auto';
       const name = auto ? x.product : `${x.brand ? `<span class="brand">${hl(x.brand, terms)}</span>牌` : ''}${hl(x.product, terms)}`;
       const qty = x.qty ? `<span class="qty num">${fmtN(x.qty)}</span> ${esc(x.unit || '')}` : '';
       const meta = [hl(x.company, terms), x.province, x.model ? '型号 ' + hl(x.model, terms) : '', x.produced ? x.produced.replace(/年|月/g, '/').replace(/日/g, '') + ' 生产' : ''].filter(Boolean).join(' · ');
-      return `<a class="item" href="${esc(x.url)}" target="_blank" rel="noopener">
+      // 没有产品照片的用品类占位，保证列表左侧对齐
+      return `<a class="item has-img" href="${esc(x.url)}" target="_blank" rel="noopener">
+        ${x.img ? `<div class="pic" style="background-image:url('${esc(x.img).replace(/'/g, '%27')}')"></div>` : `<div class="pic ph">${CAT_ICON[x.cat] || '📦'}</div>`}
+        <div class="item-main">
         <div class="item-top"><div class="item-title">${auto ? autoTitle(x, terms) : name}</div><div class="item-date">${esc(x.date)}</div></div>
         <div class="item-meta">${meta}</div>
         ${x.defect ? `<div class="item-risk">${esc(x.defect.replace(/^本次召回范围内的[^，]*，/, ''))}</div>` : ''}
@@ -302,7 +312,7 @@
           ${auto && x.start ? `<span class="badge info">${esc(x.start)} 起实施</span>` : ''}
           ${x.remedy && /免费/.test(x.remedy) ? '<span class="badge info">免费退换修</span>' : ''}
           <span class="src">${auto ? '汽车召回' : '消费品召回'}${x.codes?.length ? ' · ' + esc(x.codes.join(' ')) : ''}</span>
-        </div></a>`;
+        </div></div></a>`;
     }
     function failCard(x, terms) {
       const brand = x.brand ? `<span class="brand">${hl(x.brand, terms)}</span> ` : '';

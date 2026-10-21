@@ -200,6 +200,17 @@ def article_body(lines, title):
     return lines
 
 
+IMG_SKIP = re.compile(r"logo|icon|wx|weixin|qrcode|ewm|banner|share|gongan|jiucuo|dzjg|/blue", re.I)
+
+
+def content_img(h):
+    """召回公告正文里的第一张产品 / 车辆照片（站点 CMS 上传目录），没有返回空串。"""
+    for src in re.findall(r'<img[^>]+src="([^"]+)"', h):
+        if "/cms_files/filemanager/" in src and "/picture/" in src and not IMG_SKIP.search(src):
+            return urllib.parse.urljoin(DPRC + "/", html.unescape(src))
+    return ""
+
+
 TABLE_KEYS = ["生产者名称", "产品名称", "品牌", "型号/规格", "生产起止日期", "涉及数量", "生产批号/批次", "产品描述及外观照片",
               "存在的缺陷", "可能导致的后果", "避免损害发生的应急处置方式", "具体召回措施", "召回负责机构", "召回联系方式",
               "召回进度安排", "其他需要报告的内容", "其他信息"]
@@ -218,7 +229,8 @@ def recall_table(lines):
 
 
 def parse_consumer_recall(date_s, title, url):
-    all_lines = page_text(fetch(url))
+    h = fetch(url)
+    all_lines = page_text(h)
     lines = article_body(all_lines, title)
     body = "\n".join(lines)
     m = re.match(r"【(?P<prov>[^】]+)】(?P<co>.+?)(?:扩大)?召回(?:部分)?(?P<rest>.+)$", title)
@@ -230,7 +242,7 @@ def parse_consumer_recall(date_s, title, url):
     if tb:                                        # 表格式公告
         q = re.match(r"([\d,，.万]+)\s*(\S{0,3})", tb.get("涉及数量", ""))
         return {
-            "kind": "consumer", "date": date_s, "title": title, "url": url, "province": prov,
+            "kind": "consumer", "date": date_s, "title": title, "url": url, "img": content_img(h), "province": prov,
             "company": tb.get("生产者名称") or co, "brand": tb.get("品牌") or brand, "product": prod,
             "cat": guess_cat(prod + title), "qty": q.group(1).replace(",", "").replace("，", "") if q else "",
             "unit": q.group(2) if q else "", "model": clean(tb.get("型号/规格", ""))[:120],
@@ -251,7 +263,7 @@ def parse_consumer_recall(date_s, title, url):
     defect = next((x for x in sentences if "本次召回范围内" in x or "由于" in x or "隐患" in x or "可能" in x and "风险" in x), "")
     remedy = next((x for x in sentences if re.search(r"将(?:免费|为)", x)), "")
     return {
-        "kind": "consumer", "date": date_s, "title": title, "url": url, "province": prov, "company": co,
+        "kind": "consumer", "date": date_s, "title": title, "url": url, "img": content_img(h), "province": prov, "company": co,
         "brand": brand, "product": prod, "cat": guess_cat(prod + title),
         "qty": qn, "unit": qu,
         "model": clean(model.group(1))[:120] if model else "", "produced": produced.group(1) if produced else "",
@@ -260,7 +272,8 @@ def parse_consumer_recall(date_s, title, url):
 
 
 def parse_auto_recall(date_s, title, url):
-    lines = article_body(page_text(fetch(url)), title)
+    h = fetch(url)
+    lines = article_body(page_text(h), title)
     body = "\n".join(lines)
     m = re.match(r"(?P<co>.+?)(?:扩大)?召回", title)
     co, prod = (m.group("co") if m else ""), auto_product(title)
@@ -270,7 +283,7 @@ def parse_auto_recall(date_s, title, url):
     remedy = next((s for s in re.split(r"(?<=。)", body) if re.search(r"将为|免费", s)), "")
     start = re.search(r"自(\d{4}年\d{1,2}月\d{1,2}日)起", body)
     return {
-        "kind": "auto", "date": date_s, "title": title, "url": url, "company": co, "brand": brand_of_car(co, prod),
+        "kind": "auto", "date": date_s, "title": title, "url": url, "img": content_img(h), "company": co, "brand": brand_of_car(co, prod),
         "product": prod, "cat": "汽车", "qty": str(sum(qtys)) if qtys else "", "unit": "辆",
         "codes": nums[:6], "start": start.group(1) if start else "",
         "defect": clean(defect)[:300], "remedy": clean(remedy)[:200],
@@ -532,6 +545,17 @@ def main():
         sources.append({"id": "cca", "name": "中消协消费警示", "ok": False, "count": len(tips),
                         "error": f"{type(e).__name__}: {e}"[:160], "updated": old_src.get("cca", {}).get("updated")})
         print(f"✗ 中消协消费警示: {e}")
+
+    # 补图：加图片字段之前抓的召回没有 img 键，每次补一批（没有图的记成空串，不再重复请求）
+    missing = [x for x in recalls if "img" not in x][:300]
+    for x in missing:
+        try:
+            x["img"] = content_img(fetch(x["url"]))
+        except Exception:
+            pass
+        time.sleep(PAUSE)
+    if missing:
+        print(f"  补图 {len(missing)} 条，命中 {sum(1 for x in missing if x.get('img'))}")
 
     # 品类每次都按最新关键词重算，调整关键词后旧数据也跟着变；通报标题只在 notices 里存一份
     for x in recalls:
