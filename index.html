@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <title>消费避坑</title>
+  <meta name="description" content="最近被召回、抽检不合格的产品和食品：消费品召回、汽车召回、食品抽检、产品质量国抽，可按品牌和产品搜索">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0a0a;
+      --panel: #151313;
+      --panel-2: #1c1a19;
+      --hover: rgba(255,255,255,0.04);
+      --line: rgba(255,255,255,0.07);
+      --line-2: rgba(255,255,255,0.14);
+      --text-1: #f1eeec;
+      --text-2: #aaa39f;
+      --text-3: #726b67;
+      --accent: #fb923c;
+      --grad: linear-gradient(120deg, #f87171 0%, #fb923c 55%, #fbbf24 100%);
+      --bad: #f87171;
+      --warn: #fbbf24;
+      --good: #34d399;
+      --info: #60a5fa;
+      --mark: rgba(251,146,60,0.28);
+      --shadow: 0 0 0 1px var(--line), 0 12px 32px rgba(0,0,0,0.35);
+    }
+    :root[data-theme="light"] {
+      --bg: #f8f6f4;
+      --panel: #ffffff;
+      --panel-2: #f4f1ee;
+      --hover: rgba(40,20,10,0.035);
+      --line: rgba(40,20,10,0.08);
+      --line-2: rgba(40,20,10,0.16);
+      --text-1: #1d1612;
+      --text-2: #5c514a;
+      --text-3: #978b83;
+      --accent: #ea580c;
+      --bad: #dc2626;
+      --warn: #b45309;
+      --good: #059669;
+      --info: #2563eb;
+      --mark: rgba(234,88,12,0.18);
+      --shadow: 0 0 0 1px var(--line), 0 10px 28px rgba(40,20,10,0.06);
+    }
+
+    body {
+      background: var(--bg); color: var(--text-1);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    input { font: inherit; color: var(--text-1); }
+    .num { font-variant-numeric: tabular-nums; }
+    mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+    /* 顶栏 */
+    .topbar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom: 1px solid var(--line); }
+    .topbar-inner { max-width: 1180px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; white-space: nowrap; }
+    .logo-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--grad); display: grid; place-items: center; font-size: 16px; }
+    .nav { display: flex; gap: 4px; background: var(--hover); border: 1px solid var(--line); border-radius: 11px; padding: 3px; }
+    .nav a { padding: 6px 12px; border-radius: 8px; color: var(--text-2); font-weight: 600; font-size: 13px; white-space: nowrap; }
+    .nav a:hover { color: var(--text-1); background: var(--panel); }
+    .spacer { flex: 1; }
+    .updated { font-size: 12px; color: var(--text-3); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+    .live-dot.stale { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 25%, transparent); }
+    .icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--text-2); flex-shrink: 0; }
+    .icon-btn:hover { color: var(--text-1); border-color: var(--line-2); }
+    .icon-btn.spin svg { animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 20px 60px; }
+    .panel { background: var(--panel); border-radius: 14px; box-shadow: var(--shadow); }
+    .hero h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .hero h1 em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p { color: var(--text-2); margin-top: 6px; }
+    .search { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 52px; border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+    .search:focus-within { box-shadow: 0 0 0 2px var(--accent), 0 12px 32px rgba(0,0,0,0.2); }
+    .search input { flex: 1; min-width: 0; background: none; border: 0; outline: 0; font-size: 16px; }
+    .search .clear { color: var(--text-3); font-size: 18px; padding: 4px; }
+    .hints { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; align-items: center; font-size: 12.5px; color: var(--text-3); }
+    .hints button { color: var(--text-2); padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); font-size: 12.5px; }
+    .hints button:hover { color: var(--text-1); border-color: var(--line-2); }
+
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 18px; }
+    .stat { padding: 14px 16px; min-width: 0; }
+    .stat label { font-size: 12px; color: var(--text-3); display: block; }
+    .stat b { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    .stat small { color: var(--text-2); font-size: 12.5px; margin-left: 4px; }
+    .stat .sub { font-size: 12px; color: var(--text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .focus { margin-top: 12px; padding: 12px 16px; font-size: 13.5px; color: var(--text-2); line-height: 1.7; }
+    .focus b { color: var(--text-1); }
+
+    .section-title { font-size: 17px; font-weight: 800; margin: 34px 0 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; scroll-margin-top: 70px; }
+    .section-title small { color: var(--text-3); font-weight: 500; font-size: 12.5px; }
+    .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .seg { display: inline-flex; background: var(--hover); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+    .seg button { padding: 5px 12px; border-radius: 7px; font-size: 13px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
+    .seg button.active { background: var(--panel); color: var(--text-1); box-shadow: 0 0 0 1px var(--line-2); }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+    .chip:hover { border-color: var(--line-2); color: var(--text-1); }
+    .chip.active { background: var(--text-1); color: var(--bg); border-color: var(--text-1); }
+    .chip .n { opacity: .6; margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+    .badge { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: var(--hover); color: var(--text-2); border: 1px solid var(--line); }
+    .badge.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+    .badge.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+    .badge.info { color: var(--info); border-color: color-mix(in srgb, var(--info) 35%, transparent); background: color-mix(in srgb, var(--info) 10%, transparent); }
+
+    /* 列表 */
+    .list { overflow: hidden; }
+    .item { display: block; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+    .item:last-child { border-bottom: 0; }
+    .item:hover { background: var(--hover); }
+    .item-top { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
+    .item-title { font-weight: 700; font-size: 14.5px; min-width: 0; }
+    .item-title .brand { color: var(--accent); }
+    .item-date { color: var(--text-3); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .item-meta { font-size: 12.5px; color: var(--text-2); margin-top: 3px; }
+    .item-risk { font-size: 13px; color: var(--text-1); margin-top: 6px; line-height: 1.6; }
+    .item-risk .why { color: var(--bad); font-weight: 600; }
+    .item-foot { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+    .item-foot .src { margin-left: auto; font-size: 12px; color: var(--text-3); }
+    .qty { font-weight: 800; color: var(--text-1); }
+    .empty { padding: 30px; text-align: center; color: var(--text-3); }
+    .more { display: block; width: 100%; padding: 11px; color: var(--text-2); font-weight: 600; font-size: 13px; border-top: 1px solid var(--line); }
+    .more:hover { color: var(--text-1); background: var(--hover); }
+
+    .tips a { display: flex; gap: 12px; padding: 11px 18px; border-bottom: 1px solid var(--line); }
+    .tips a:last-child { border-bottom: 0; }
+    .tips a:hover { background: var(--hover); }
+    .tips span { color: var(--text-3); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    .sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; padding: 14px; }
+    .srcs { display: flex; align-items: center; gap: 8px; font-size: 12.5px; min-width: 0; }
+    .srcs i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex-shrink: 0; }
+    .srcs i.fail { background: var(--bad); }
+    .srcs span { color: var(--text-3); margin-left: auto; white-space: nowrap; }
+    .foot { color: var(--text-3); font-size: 12px; margin-top: 18px; line-height: 1.7; }
+
+    @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 760px) {
+      .topbar-inner { padding: 10px 16px; gap: 10px; }
+      .nav, .updated .txt { display: none; }
+      .wrap { padding: 18px 16px 48px; }
+      .hero h1 { font-size: 22px; }
+      .stat b { font-size: 20px; }
+      .item { padding: 12px 14px; }
+      .item-top { flex-direction: column; gap: 2px; }
+      .item-foot .src { margin-left: 0; width: 100%; }
+      .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+      .chips::-webkit-scrollbar { display: none; }
+      .bar { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
+      .bar .seg { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="logo"><div class="logo-mark">🛡</div>消费避坑</div>
+      <nav class="nav"><a href="#recalls">召回</a><a href="#fails">抽检不合格</a><a href="#tips">消费提示</a></nav>
+      <div class="spacer"></div>
+      <div class="updated"><span class="live-dot" id="dot"></span><span class="txt" id="updated">加载中…</span></div>
+      <button class="icon-btn" id="reload" title="重新读取数据">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/climb0516/recall-watch/actions/workflows/scrape.yml" target="_blank" rel="noopener" title="去 GitHub Actions 手动触发抓取">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </a>
+      <button class="icon-btn" id="theme" title="切换深浅色">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h1>最近哪些东西<em>被召回、不合格</em></h1>
+      <p>市场监管总局召回中心、食品抽检、产品质量国抽，以及浙江省局的抽检通告。搜一下你买过的牌子。</p>
+      <label class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="color:var(--text-3)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="搜品牌、产品、车型、店铺… 例如：电热水壶、理想、奶粉" autocomplete="off">
+        <button class="clear" id="clear" title="清空" hidden>×</button>
+      </label>
+      <div class="hints" id="hints"></div>
+    </section>
+
+    <div id="search-results" hidden>
+      <h2 class="section-title">🔍 搜索结果 <small id="sr-sub"></small></h2>
+      <div class="panel list" id="sr-list"></div>
+    </div>
+
+    <div id="main">
+      <div class="stats" id="stats"></div>
+      <div class="panel focus" id="focus"></div>
+
+      <h2 class="section-title" id="recalls">♻️ 缺陷产品召回 <small>企业主动或被要求召回的产品，按召回公告发布日期排序</small></h2>
+      <div class="bar"><div class="seg" id="rc-kind"></div><div class="chips" id="rc-cat"></div></div>
+      <div class="panel list" id="rc-list"></div>
+
+      <h2 class="section-title" id="fails">🧪 抽检不合格 <small>监督抽检中不合格的批次，不代表该品牌所有产品都有问题</small></h2>
+      <div class="bar"><div class="seg" id="fl-kind"></div><div class="chips" id="fl-filter"></div></div>
+      <div class="panel list" id="fl-list"></div>
+
+      <h2 class="section-title" id="tips">📢 消费提示 <small>中国消费者协会</small></h2>
+      <div class="panel tips" id="tips-list"></div>
+    </div>
+
+    <h2 class="section-title">📡 数据来源</h2>
+    <div class="panel sources" id="sources"></div>
+    <p class="foot">
+      数据来自国家市场监督管理总局缺陷产品召回中心、市场监管总局食品抽检通报与产品质量国家监督抽查通报、浙江省市场监督管理局食品抽检通告、中国消费者协会，每 6 小时自动抓取，保留近一年（国抽两年）。<br>
+      「不合格」只针对被抽检的那一批次，信息以原公告为准，点击条目可查看原文。召回产品可联系企业免费退换修，汽车召回可在召回中心网站按 VIN 码查询。
+    </p>
+  </main>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const store = {
+      get(k, d) { try { const v = localStorage.getItem('rw:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem('rw:' + k, JSON.stringify(v)); } catch {} },
+    };
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const todayStr = () => { const d = new Date(Date.now() + (480 + new Date().getTimezoneOffset()) * 60000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const daysAgo = n => { const d = new Date(todayStr()); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+    const md = s => s ? `${+s.slice(5, 7)}/${+s.slice(8, 10)}` : '';
+    const fmtN = n => Number(n).toLocaleString('zh-CN');
+
+    // 不合格项目 → 白话解释（命中第一条即用）
+    const PLAIN = [
+      [/黄曲霉/, '黄曲霉毒素超标：强致癌物，多因原料霉变'],
+      [/菌落总数|大肠菌群|霉菌|酵母|假单胞菌|沙门|葡萄球菌|李斯特|蜡样芽胞|致病菌/, '微生物超标：卫生没控制好，可能引起肠胃不适'],
+      [/铅|镉|汞|砷|铬|镍/, '重金属超标：长期摄入会在体内蓄积'],
+      [/二氧化硫/, '二氧化硫超标：熏硫漂白、防腐用过量'],
+      [/甜蜜素|糖精|安赛蜜|纽甜|阿斯巴甜|三氯蔗糖/, '甜味剂超量或超范围使用'],
+      [/苯甲酸|山梨酸|脱氢乙酸|防腐剂|丙酸/, '防腐剂超量或超范围使用'],
+      [/日落黄|柠檬黄|胭脂红|苋菜红|亮蓝|诱惑红|赤藓红|色素|着色/, '色素超量或超范围使用'],
+      [/过氧化值|酸价|酸值|羰基/, '油脂酸败：不新鲜或储存不当'],
+      [/毒死蜱|克百威|氧乐果|甲拌磷|阿维菌素|啶虫脒|噻虫|吡虫啉|腐霉利|多菌灵|乙酰甲胺磷|联苯菊酯|氯氟氰菊酯|铅|三唑磷|甲胺磷|敌敌畏|氟虫腈|灭蝇胺|异菌脲|氯唑磷|水胺硫磷|倍硫磷|农药/, '农药残留超标'],
+      [/恩诺沙星|氧氟沙星|环丙沙星|氯霉素|呋喃|孔雀石绿|地西泮|磺胺|甲硝唑|五氯酚|地塞米松|多西环素|甲氧苄啶|兽药/, '兽药残留超标'],
+      [/酒精度/, '酒精度与标签不符'],
+      [/标签|标示/, '成分含量与标签宣称不符'],
+      [/蛋白质|维生素|钙|锌|铁|能量|膳食纤维|含量/, '营养成分与标签宣称不符'],
+      [/触及带电|接地|泄漏电流|电气强度|电气间隙|爬电|绝缘|耐潮湿|保护连接|抗电强度|电源连接/, '有触电风险'],
+      [/非正常工作|发热|耐热|阻燃|燃烧|着火|灼热丝|温升|过热/, '有过热、起火风险'],
+      [/辐射发射|传导发射|谐波|骚扰/, '电磁干扰超标：可能干扰其他电器，一般不直接伤人'],
+      [/能效|能源消耗|待机功率/, '能效不达标：更费电'],
+      [/小零件|锐利|绳带|抗拉|附件|可触及|窒息|夹伤|稳定性|机械/, '有夹伤、划伤或儿童误吞风险'],
+      [/甲醛|pH|偶氮|芳香胺|邻苯|增塑剂|多环芳烃|迁移/, '有害化学物质超标'],
+      [/纤维含量|成分/, '材质成分与标签不符'],
+      [/制动|沸点|粘度|闪点/, '性能不达标：可能影响行车安全'],
+      [/标识|标志|说明|使用说明/, '标识或说明不规范'],
+    ];
+    const plain = s => { for (const [re, t] of PLAIN) if (re.test(s || '')) return t; return ''; };
+
+    let DATA = null, NOTICE = {};       // NOTICE：通报 URL → 标题（不合格条目只存 URL）
+    const st = {
+      rcKind: store.get('rcKind', 'consumer'), rcCat: 'all', rcMore: false,
+      flKind: store.get('flKind', 'food'), flF: 'all', flMore: false,
+    };
+
+    // ── 卡片 ──
+    function hl(text, terms) {
+      let s = esc(text);
+      if (!terms || !terms.length) return s;
+      for (const t of terms) {
+        if (!t) continue;
+        s = s.replace(new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`);
+      }
+      return s;
+    }
+    // 汽车标题：品牌（识别不出时用公司简称）+ 车型；车型本身以品牌开头时不重复
+    function autoTitle(x, terms) {
+      const brand = x.brand || (x.company || '').replace(/[（(].*$|汽车.*$|集团.*$|有限.*$|股份.*$/, '');
+      if (brand && (x.product || '').startsWith(brand)) return `<span class="brand">${hl(x.product, terms)}</span>`;
+      return `<span class="brand">${hl(brand, terms)}</span> ${hl(x.product, terms)}`;
+    }
+    function recallCard(x, terms) {
+      const auto = x.kind === 'auto';
+      const name = auto ? x.product : `${x.brand ? `<span class="brand">${hl(x.brand, terms)}</span>牌` : ''}${hl(x.product, terms)}`;
+      const qty = x.qty ? `<span class="qty num">${fmtN(x.qty)}</span> ${esc(x.unit || '')}` : '';
+      const meta = [hl(x.company, terms), x.province, x.model ? '型号 ' + hl(x.model, terms) : '', x.produced ? x.produced.replace(/年|月/g, '/').replace(/日/g, '') + ' 生产' : ''].filter(Boolean).join(' · ');
+      return `<a class="item" href="${esc(x.url)}" target="_blank" rel="noopener">
+        <div class="item-top"><div class="item-title">${auto ? autoTitle(x, terms) : name}</div><div class="item-date">${esc(x.date)}</div></div>
+        <div class="item-meta">${meta}</div>
+        ${x.defect ? `<div class="item-risk">${esc(x.defect.replace(/^本次召回范围内的[^，]*，/, ''))}</div>` : ''}
+        <div class="item-foot">
+          ${qty ? `<span class="badge bad">召回 ${qty}</span>` : ''}
+          <span class="badge">${esc(x.cat)}</span>
+          ${auto && x.start ? `<span class="badge info">${esc(x.start)} 起实施</span>` : ''}
+          ${x.remedy && /免费/.test(x.remedy) ? '<span class="badge info">免费退换修</span>' : ''}
+          <span class="src">${auto ? '汽车召回' : '消费品召回'}${x.codes?.length ? ' · ' + esc(x.codes.join(' ')) : ''}</span>
+        </div></a>`;
+    }
+    function failCard(x, terms) {
+      const brand = x.brand ? `<span class="brand">${hl(x.brand, terms)}</span> ` : '';
+      const where = [x.platform ? `${esc(x.platform)}${x.shop ? '「' + hl(x.shop, terms) + '」' : ''}` : '', hl(x.seller, terms)].filter(Boolean).join(' · ');
+      const items = (x.items || '').replace(/\*/g, '');
+      const p = plain(x.items);
+      return `<a class="item" href="${esc(x.url)}" target="_blank" rel="noopener">
+        <div class="item-top"><div class="item-title">${brand}${hl(x.product, terms)}${x.spec ? ` <small style="color:var(--text-3);font-weight:500">${esc(x.spec)}</small>` : ''}</div><div class="item-date">${esc(x.date)}</div></div>
+        <div class="item-meta">${x.maker ? '标称生产：' + hl(x.maker, terms) : ''}${x.maker && where ? ' · ' : ''}${where ? '销售：' + where : ''}</div>
+        <div class="item-risk"><span class="why">${hl(items, terms)}</span> 不合格${x.value ? `<small style="color:var(--text-3)">（检出 ${esc(x.value)}，标准 ${esc(x.std)}）</small>` : ''}${p ? ` — ${esc(p)}` : ''}</div>
+        <div class="item-foot">
+          <span class="badge">${esc(x.cat)}</span>
+          ${x.region && x.region !== '全国' ? `<span class="badge warn">${esc(x.region.replace(/省$/, ''))}</span>` : ''}
+          ${/\*/.test(x.items || '') ? '<span class="badge bad">安全项目</span>' : ''}
+          ${x.note ? `<span class="badge">${esc(x.note)}</span>` : ''}
+          <span class="src">${esc(x.src === '国抽' ? '产品质量国抽' : x.src + '食品抽检')} · ${esc((NOTICE[x.url] || '').replace(/^市场监管总局(办公厅)?关于|^浙江省市场监督管理局/, ''))}</span>
+        </div></a>`;
+    }
+
+    // ── 概览 ──
+    function renderStats(d) {
+      const since = daysAgo(30);
+      const rc = d.recalls.filter(x => x.date >= since);
+      const cons = rc.filter(x => x.kind === 'consumer'), auto = rc.filter(x => x.kind === 'auto');
+      const sum = a => a.reduce((s, x) => s + (+x.qty || 0), 0);
+      const food = d.fails.filter(x => x.kind === 'food' && x.date >= since);
+      const zj = food.filter(x => x.src === '浙江');
+      const lastG = d.fails.filter(x => x.src === '国抽').map(x => x.date).sort().pop();
+      const guo = d.fails.filter(x => x.src === '国抽' && x.date === lastG);
+      $('#stats').innerHTML = `
+        <div class="panel stat"><label>近 30 天消费品召回</label><b class="num">${cons.length}</b><small>起</small><div class="sub">涉及 ${fmtN(sum(cons))} 件</div></div>
+        <div class="panel stat"><label>近 30 天汽车召回</label><b class="num">${auto.length}</b><small>起</small><div class="sub">涉及 ${fmtN(sum(auto))} 辆</div></div>
+        <div class="panel stat"><label>近 30 天食品抽检不合格</label><b class="num">${food.length}</b><small>批</small><div class="sub">其中浙江 ${zj.length} 批</div></div>
+        <div class="panel stat"><label>最近一期产品国抽不合格</label><b class="num">${guo.length}</b><small>批</small><div class="sub">${lastG ? md(lastG) + ' 发布' : '暂无'}</div></div>`;
+      // 重点：召回品类排行 + 高频不合格原因
+      const cnt = (arr, f) => { const m = {}; arr.forEach(x => { const k = f(x); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+      const cats = cnt(cons, x => x.cat).slice(0, 4).map(([k, n]) => `${k} ${n} 起`).join('、');
+      const reasons = cnt(food, x => plain(x.items).split('：')[0]).slice(0, 3).map(([k, n]) => `${k}（${n} 批）`).join('、');
+      const big = [...auto].sort((a, b) => (+b.qty || 0) - (+a.qty || 0))[0];
+      $('#focus').innerHTML = [
+        cats && `召回最多的品类：<b>${esc(cats)}</b>`,
+        big && +big.qty ? `最大一起汽车召回：<b>${esc(big.brand || '')} ${esc(big.product)}</b> ${fmtN(big.qty)} 辆` : '',
+        reasons && `食品不合格最常见：<b>${esc(reasons)}</b>`,
+      ].filter(Boolean).join('<br>') || '近 30 天暂无数据';
+      // 搜索示例：取近期召回 / 不合格里出现最多的品类词
+      const ex = ['电热水壶', '儿童', '充电宝', '奶粉', '月饼', ...cnt(auto, x => x.brand).slice(0, 2).map(x => x[0])];
+      $('#hints').innerHTML = '试试：' + [...new Set(ex)].slice(0, 7).map(t => `<button data-q="${esc(t)}">${esc(t)}</button>`).join('');
+    }
+
+    // ── 召回 ──
+    function renderRecalls(d) {
+      const kinds = [['consumer', '消费品'], ['auto', '汽车']];
+      const all = d.recalls.filter(x => x.kind === st.rcKind);
+      $('#rc-kind').innerHTML = kinds.map(([k, n]) => `<button class="${st.rcKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.recalls.filter(x => x.kind === k).length}</span></button>`).join('');
+      const cats = {};
+      all.forEach(x => cats[x.cat] = (cats[x.cat] || 0) + 1);
+      const names = st.rcKind === 'auto' ? ['all'] : ['all', ...Object.keys(cats).sort((a, b) => cats[b] - cats[a])];
+      if (!names.includes(st.rcCat)) st.rcCat = 'all';
+      $('#rc-cat').innerHTML = names.length > 1 ? names.map(c => `<button class="chip ${st.rcCat === c ? 'active' : ''}" data-c="${esc(c)}">${c === 'all' ? '全部' : esc(c)}<span class="n">${c === 'all' ? all.length : cats[c]}</span></button>`).join('') : '';
+      const list = all.filter(x => st.rcCat === 'all' || x.cat === st.rcCat);
+      const shown = st.rcMore ? list : list.slice(0, 15);
+      $('#rc-list').innerHTML = (shown.length ? shown.map(x => recallCard(x)).join('') : '<div class="empty">暂无召回</div>')
+        + (list.length > shown.length ? `<button class="more" data-more="rc">展开全部 ${list.length} 条</button>` : '');
+    }
+    $('#rc-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.rcKind = b.dataset.k; st.rcCat = 'all'; st.rcMore = false; store.set('rcKind', st.rcKind); renderRecalls(DATA); });
+    $('#rc-cat').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.rcCat = b.dataset.c; st.rcMore = false; renderRecalls(DATA); });
+    $('#rc-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); st.rcMore = true; renderRecalls(DATA); } });
+
+    // ── 不合格 ──
+    function renderFails(d) {
+      const kinds = [['food', '食品'], ['product', '产品']];
+      const all = d.fails.filter(x => x.kind === st.flKind);
+      $('#fl-kind').innerHTML = kinds.map(([k, n]) => `<button class="${st.flKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.fails.filter(x => x.kind === k).length}</span></button>`).join('');
+      const filters = [['all', '全部', () => true]];
+      if (st.flKind === 'food') filters.push(['zj', '只看浙江', x => x.src === '浙江']);
+      const plats = {};
+      all.forEach(x => { if (x.platform) plats[x.platform] = (plats[x.platform] || 0) + 1; });
+      Object.keys(plats).sort((a, b) => plats[b] - plats[a]).slice(0, 7).forEach(p => filters.push(['p:' + p, p, x => x.platform === p]));
+      const cats = {};
+      all.forEach(x => cats[x.cat] = (cats[x.cat] || 0) + 1);
+      Object.keys(cats).sort((a, b) => cats[b] - cats[a]).forEach(c => filters.push(['c:' + c, c, x => x.cat === c]));
+      if (!filters.some(f => f[0] === st.flF)) st.flF = 'all';
+      $('#fl-filter').innerHTML = filters.map(([k, n, fn]) => `<button class="chip ${st.flF === k ? 'active' : ''}" data-f="${esc(k)}">${esc(n)}<span class="n">${all.filter(fn).length}</span></button>`).join('');
+      const fn = filters.find(f => f[0] === st.flF)[2];
+      const list = all.filter(fn);
+      const shown = st.flMore ? list : list.slice(0, 15);
+      $('#fl-list').innerHTML = (shown.length ? shown.map(x => failCard(x)).join('') : '<div class="empty">暂无不合格记录</div>')
+        + (list.length > shown.length ? `<button class="more" data-more="fl">展开全部 ${list.length} 条</button>` : '');
+    }
+    $('#fl-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.flKind = b.dataset.k; st.flF = 'all'; st.flMore = false; store.set('flKind', st.flKind); renderFails(DATA); });
+    $('#fl-filter').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.flF = b.dataset.f; st.flMore = false; renderFails(DATA); });
+    $('#fl-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); st.flMore = true; renderFails(DATA); } });
+
+    // ── 搜索：空格分隔多个词，全部命中才算 ──
+    let srMore = false;
+    function searchText(x) {
+      return [x.title, x.brand, x.product, x.company, x.model, x.maker, x.seller, x.shop, x.platform, x.items, x.cat, x.group, x.province, x.region, x.defect, (x.codes || []).join(' ')].join(' ').toLowerCase();
+    }
+    function renderSearch() {
+      const q = $('#q').value.trim();
+      $('#clear').hidden = !q;
+      if (!q || !DATA) { $('#search-results').hidden = true; $('#main').hidden = false; return; }
+      const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const hit = x => { const t = searchText(x); return terms.every(w => t.includes(w)); };
+      const rc = DATA.recalls.filter(hit).map(x => ({ ...x, _t: 'r' }));
+      const fl = DATA.fails.filter(hit).map(x => ({ ...x, _t: 'f' }));
+      const all = [...rc, ...fl].sort((a, b) => b.date.localeCompare(a.date));
+      $('#sr-sub').textContent = all.length ? `召回 ${rc.length} 条 · 不合格 ${fl.length} 条` : '';
+      const shown = srMore ? all : all.slice(0, 30);
+      $('#sr-list').innerHTML = (shown.length ? shown.map(x => x._t === 'r' ? recallCard(x, terms) : failCard(x, terms)).join('')
+        : `<div class="empty">近一年的召回和抽检不合格里没有「${esc(q)}」<br><small>没出现不代表没问题，只是没被抽到或没被召回</small></div>`)
+        + (all.length > shown.length ? `<button class="more" data-more="sr">展开全部 ${all.length} 条</button>` : '');
+      $('#search-results').hidden = false; $('#main').hidden = true;
+    }
+    let timer;
+    $('#q').addEventListener('input', () => { clearTimeout(timer); srMore = false; timer = setTimeout(renderSearch, 150); });
+    $('#clear').addEventListener('click', e => { e.preventDefault(); $('#q').value = ''; renderSearch(); $('#q').focus(); });
+    $('#hints').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return; $('#q').value = b.dataset.q; srMore = false; renderSearch(); });
+    $('#sr-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); srMore = true; renderSearch(); } });
+
+    function renderTips(d) {
+      $('#tips-list').innerHTML = (d.tips || []).slice(0, 10).map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener"><span>${esc(x.date)}</span>${esc(x.title)}</a>`).join('') || '<div class="empty">暂无</div>';
+    }
+    function renderSources(d) {
+      const srcs = d.sources || [];
+      $('#sources').innerHTML = srcs.map(s => `<div class="srcs" title="${esc(s.error || '')}"><i class="${s.ok ? '' : 'fail'}"></i>${esc(s.name)}
+        <span>${s.ok ? `${s.count} 条${s.added ? ` · 新增 ${s.added}` : ''}` : '失败，沿用旧数据'}</span></div>`).join('');
+      const bad = srcs.filter(s => !s.ok).length;
+      $('#dot').classList.toggle('stale', bad > 0);
+      const t = new Date(d.updated);
+      $('#updated').textContent = `${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')} 更新` + (bad ? ` · ${bad} 个来源异常` : '');
+    }
+
+    async function load() {
+      const btn = $('#reload');
+      btn.classList.add('spin');
+      try {
+        // no-cache：每次向服务器校验，更新后立刻可见；失败时保留现有内容
+        const d = await fetch('data.json', { cache: 'no-cache' }).then(r => r.json());
+        DATA = d;
+        NOTICE = Object.fromEntries((d.notices || []).map(n => [n.url, n.title]));
+        renderStats(d); renderRecalls(d); renderFails(d); renderTips(d); renderSources(d); renderSearch();
+      } catch (e) {
+        if (!DATA) $('#updated').textContent = '数据加载失败';
+        console.error(e);
+      } finally {
+        btn.classList.remove('spin');
+      }
+    }
+
+    function applyTheme(t) { document.documentElement.dataset.theme = t; }
+    applyTheme(store.get('theme', matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+    $('#theme').addEventListener('click', () => {
+      const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(t); store.set('theme', t);
+    });
+    $('#reload').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>
