@@ -195,6 +195,7 @@
       background: linear-gradient(var(--kit-panel), var(--kit-panel)), var(--kit-bg); box-shadow: 0 0 0 1px var(--kit-line2), 0 24px 60px rgba(0,0,0,.45);
       animation: kit-in .24s ease-out; }
     @keyframes kit-in { from { transform: translateX(40px); opacity: 0; } }
+    .kit-sheet.kit-small { bottom: auto; }
     .kit-x { position: absolute; top: 12px; right: 12px; z-index: 3; width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer;
       background: rgba(0,0,0,.5); color: #fff; font-size: 15px; display: grid; place-items: center; }
     .kit-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
@@ -259,6 +260,7 @@
     @media (max-width: 760px) {
       .kit-sheet { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; height: 86vh; border-radius: 18px 18px 0 0; animation: kit-up .26s ease-out; }
       @keyframes kit-up { from { transform: translateY(30%); opacity: .5; } }
+      .kit-sheet.kit-small { height: auto; }
       .kit-head { padding: 16px 16px 4px; } .kit-body { padding: 4px 16px 18px; } .kit-acts { padding: 10px 16px 16px; }
       .kit-cover.tall { height: 220px; }
       .kit-head .kit-thumb { width: 46px; height: 46px; border-radius: 12px; font-size: 22px; }
@@ -372,6 +374,7 @@ const KIT = (() => {
         ? `<a class="${a.pri || (i === 0 && acts.length < 3) ? 'pri' : ''}" href="${kesc(a.href)}" ${a.self ? '' : 'target="_blank" rel="noopener"'}>${a.text}</a>`
         : `<button class="${a.pri ? 'pri' : ''}" data-kit-act="${i}">${a.text}</button>`).join('')}</div>` : ''}`;
     acts.forEach((a, i) => { if (!a.href) { const b = mask.querySelector(`[data-kit-act="${i}"]`); if (b) b.onclick = a.onclick; } });
+    mask.firstElementChild.classList.toggle('kit-small', !!d.small);       // 内容很少的提示：抽屉按内容高度
     mask.querySelector('.kit-scroll').scrollTop = 0;
     mask.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -389,9 +392,10 @@ const KIT = (() => {
   function show(r) {
     const fn = items[r.type];
     const d = fn && fn(r.id, r.q);
-    if (!d) { close(true); return false; }
-    render(d);
-    return true;
+    // 找不到这一条（已下榜 / 过期 / 链接是旧数据里的）：给个提示，而不是什么都不弹
+    render(d || { small: true, title: '这条内容已不在当前数据里', sub: '数据每天自动更新，它可能已经下榜、过期或被合并到别的条目', thumbIcon: '🕓',
+      body: KIT.p('可以回到首页看最新的内容，或用页面顶部的搜索找一找。'), acts: [{ text: '回到首页', href: '#', self: true, pri: true }] });
+    return !!d;
   }
   function close(silent) {
     if (!mask || !mask.classList.contains('open')) return;
