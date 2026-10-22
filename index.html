@@ -126,7 +126,11 @@
     .item.has-img { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 16px; align-items: start; }
     .pic { aspect-ratio: 4 / 3; border-radius: 10px; background: #fff center / contain no-repeat; border: 1px solid var(--line); }
     .item-main { min-width: 0; }
-    .pic.ph { background: var(--panel-2); display: grid; place-items: center; font-size: 34px; }
+    /* 没图的条目：按品类着色的小图标块 */
+    .item.has-ic { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: start; }
+    .ic { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font-size: 19px;
+      background: color-mix(in srgb, var(--c) 15%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent); }
+    .item-risk.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .item-top { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
     .item-title { font-weight: 700; font-size: 14.5px; min-width: 0; }
     .item-title .brand { color: var(--accent); }
@@ -140,10 +144,17 @@
     .empty { padding: 30px; text-align: center; color: var(--text-3); }
     .more { display: block; width: 100%; padding: 11px; color: var(--text-2); font-weight: 600; font-size: 13px; border-top: 1px solid var(--line); }
     .more:hover { color: var(--text-1); background: var(--hover); }
+    a.more { text-align: center; }
+    .section-title .kit-morelink { margin-left: auto; }
+    .seg a { padding: 5px 12px; border-radius: 7px; font-size: 13px; color: var(--text-2); font-weight: 600; white-space: nowrap; }
+    .seg a.active { background: var(--panel); color: var(--text-1); box-shadow: 0 0 0 1px var(--line-2); }
+    .bar .kit-sel { margin-left: auto; }
 
     .tips a { display: flex; gap: 12px; padding: 11px 18px; border-bottom: 1px solid var(--line); }
     .tips a:last-child { border-bottom: 0; }
     .tips a:hover { background: var(--hover); }
+    .tips a .tt { flex: 1; min-width: 0; }
+    .tips a img { width: 54px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
     .tips span { color: var(--text-3); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
     .sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; padding: 14px; }
@@ -156,18 +167,104 @@
     @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
     @media (max-width: 760px) {
       .topbar-inner { padding: 10px 16px; gap: 10px; }
-      .nav, .updated .txt { display: none; }
+      .updated .txt { display: none; }
+      .topbar-inner { flex-wrap: wrap; row-gap: 8px; }
+      .nav { order: 10; flex-basis: 100%; overflow-x: auto; scrollbar-width: none; }   /* 手机上导航挪到第二行，可横滑 */
+      .nav a { flex: 1; text-align: center; }
       .wrap { padding: 18px 16px 48px; }
       .hero h1 { font-size: 22px; }
       .stat b { font-size: 20px; }
       .item { padding: 12px 14px; }
       .item.has-img { grid-template-columns: 84px minmax(0, 1fr); gap: 12px; }
+      .item.has-ic { gap: 10px; }
       .item-top { flex-direction: column; gap: 2px; }
       .item-foot .src { margin-left: 0; width: 100%; }
       .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
       .chips::-webkit-scrollbar { display: none; }
       .bar { flex-wrap: nowrap; flex-direction: column; align-items: stretch; }
       .bar .seg { align-self: flex-start; }
+    }
+    /* ── 详情抽屉 + 列表页（通用组件 kit：电脑右侧滑出，手机底部升起；地址 #/item/类型/id、#/list/key） ── */
+    :root { --kit-bg: var(--bg, #0b0a10); --kit-panel: var(--panel, var(--card, rgba(255,255,255,.04))); --kit-line: var(--line, var(--sep, rgba(255,255,255,.08)));
+      --kit-line2: var(--line-2, rgba(255,255,255,.14)); --kit-t1: var(--text-1, #f1eff7); --kit-t2: var(--text-2, #a39fb3); --kit-t3: var(--text-3, #6b677a);
+      --kit-accent: var(--accent, #a3e635); --kit-hover: var(--hover, rgba(255,255,255,.05)); }
+    .kit-mask { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.38); display: none; }
+    .kit-mask.open { display: block; }
+    .kit-sheet { position: absolute; top: 12px; right: 12px; bottom: 12px; width: clamp(440px, 42vw, 620px); max-width: calc(100vw - 24px);
+      display: flex; flex-direction: column; overflow: hidden; color: var(--kit-t1); border-radius: 18px;
+      background: linear-gradient(var(--kit-panel), var(--kit-panel)), var(--kit-bg); box-shadow: 0 0 0 1px var(--kit-line2), 0 24px 60px rgba(0,0,0,.45);
+      animation: kit-in .24s ease-out; }
+    @keyframes kit-in { from { transform: translateX(40px); opacity: 0; } }
+    .kit-x { position: absolute; top: 12px; right: 12px; z-index: 3; width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer;
+      background: rgba(0,0,0,.5); color: #fff; font-size: 15px; display: grid; place-items: center; }
+    .kit-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .kit-cover { aspect-ratio: 16/9; background: var(--kit-hover) center / cover no-repeat; position: relative; }
+    .kit-cover.tall { aspect-ratio: auto; height: 280px; background-size: contain; background-color: #000; }
+    .kit-cover.ph { display: grid; place-items: center; font-size: 56px; aspect-ratio: 16/6; }
+    .kit-head { padding: 18px 20px 4px; display: flex; gap: 14px; align-items: flex-start; }
+    .kit-head .kit-thumb { flex-shrink: 0; width: 64px; height: 64px; border-radius: 14px; background: var(--kit-hover) center / cover no-repeat;
+      display: grid; place-items: center; font-size: 28px; overflow: hidden; }
+    .kit-head .kit-t { flex: 1; min-width: 0; padding-right: 30px; }
+    .kit-cover + .kit-head .kit-t { padding-right: 0; }
+    .kit-head h2 { font-size: 19px; font-weight: 800; line-height: 1.35; letter-spacing: -0.01em; }
+    .kit-sub { color: var(--kit-t2); font-size: 13px; margin-top: 4px; }
+    .kit-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .kit-tags span { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--kit-hover); color: var(--kit-t2); }
+    .kit-big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .kit-big b { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+    .kit-body { padding: 4px 20px 20px; }
+    .kit-sec { padding-top: 16px; }
+    .kit-sec + .kit-sec { margin-top: 6px; border-top: 1px solid var(--kit-line); }
+    .kit-sec h4 { font-size: 14.5px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .kit-sec h4 small { font-size: 12px; color: var(--kit-t3); font-weight: 500; }
+    .kit-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .kit-kv div { background: var(--kit-hover); border-radius: 10px; padding: 8px 11px; min-width: 0; }
+    .kit-kv small { display: block; font-size: 11px; color: var(--kit-t3); }
+    .kit-kv b { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+    .kit-p { font-size: 13.5px; line-height: 1.75; color: var(--kit-t2); white-space: pre-line; }
+    .kit-rows { display: flex; flex-direction: column; }
+    .kit-row { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--kit-line); font-size: 13px; text-decoration: none; color: inherit; }
+    .kit-row:first-child { border-top: 0; }
+    .kit-row[data-kit-go], a.kit-row { cursor: pointer; }
+    .kit-row[data-kit-go]:hover .kit-rt, a.kit-row:hover .kit-rt { color: var(--kit-accent); }
+    .kit-row .kit-rt { flex: 1; min-width: 0; line-height: 1.45; }
+    .kit-row .kit-rm { color: var(--kit-t3); font-size: 12px; white-space: nowrap; }
+    .kit-row img, .kit-row .kit-ri { width: 54px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--kit-hover); }
+    .kit-acts { flex-shrink: 0; display: flex; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--kit-line); }
+    .kit-acts a, .kit-acts button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 12px; border-radius: 11px;
+      font: inherit; font-size: 13.5px; font-weight: 700; text-decoration: none; cursor: pointer; border: 1px solid var(--kit-line2); color: var(--kit-t1); background: transparent; }
+    .kit-acts .pri { background: var(--kit-accent); border-color: var(--kit-accent); color: #111; }
+    .kit-acts a:hover, .kit-acts button:hover { filter: brightness(1.08); }
+    /* 列表页 */
+    .kit-lhead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .kit-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--kit-line2); background: transparent; color: var(--kit-t1);
+      font-size: 20px; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
+    .kit-back:hover { background: var(--kit-hover); }
+    .kit-lhead h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .kit-lhead small { color: var(--kit-t3); font-size: 12.5px; margin-left: 2px; }
+    .kit-lbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .kit-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+    .kit-chips a, .kit-chips button { padding: 5px 12px; border-radius: 8px; background: var(--kit-hover); color: var(--kit-t2); font: inherit; font-size: 13px;
+      font-weight: 600; white-space: nowrap; border: 0; cursor: pointer; text-decoration: none; }
+    .kit-chips .on { background: var(--kit-t1); color: var(--kit-bg); }
+    .kit-chips small { opacity: .6; margin-left: 4px; font-weight: 500; }
+    .kit-sel { padding: 6px 10px; border-radius: 9px; border: 1px solid var(--kit-line2); background: transparent; color: var(--kit-t1); font: inherit; font-size: 12.5px; font-weight: 600; }
+    .kit-sel option { background: var(--kit-bg); }
+    .kit-more { display: block; margin: 16px auto 0; padding: 9px 22px; border-radius: 10px; border: 1px solid var(--kit-line2); background: transparent;
+      color: var(--kit-t1); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .kit-more:hover { background: var(--kit-hover); }
+    .kit-morelink { font-size: 13px; font-weight: 600; color: var(--kit-t2); text-decoration: none; white-space: nowrap; cursor: pointer; }
+    .kit-morelink:hover { color: var(--kit-t1); }
+    [data-kit-item] { cursor: pointer; }
+    @media (max-width: 760px) {
+      .kit-sheet { top: auto; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; height: 86vh; border-radius: 18px 18px 0 0; animation: kit-up .26s ease-out; }
+      @keyframes kit-up { from { transform: translateY(30%); opacity: .5; } }
+      .kit-head { padding: 16px 16px 4px; } .kit-body { padding: 4px 16px 18px; } .kit-acts { padding: 10px 16px 16px; }
+      .kit-cover.tall { height: 220px; }
+      .kit-head .kit-thumb { width: 46px; height: 46px; border-radius: 12px; font-size: 22px; }
+      .kit-head h2 { font-size: 17.5px; }
+      .kit-big b { font-size: 24px; }
+      .kit-lhead h2 { font-size: 19px; }
     }
   </style>
 </head>
@@ -191,6 +288,8 @@
   </header>
 
   <main class="wrap">
+    <div id="listpage" hidden></div>
+    <div id="home">
     <section class="hero">
       <h1>最近哪些东西<em>被召回、不合格</em></h1>
       <p>市场监管总局召回中心、食品抽检、产品质量国抽，以及浙江省局的抽检通告。搜一下你买过的牌子。</p>
@@ -211,15 +310,15 @@
       <div class="stats" id="stats"></div>
       <div class="panel focus" id="focus"></div>
 
-      <h2 class="section-title" id="recalls">♻️ 缺陷产品召回 <small>企业主动或被要求召回的产品，按召回公告发布日期排序</small></h2>
+      <h2 class="section-title" id="recalls">♻️ 缺陷产品召回 <small>企业主动或被要求召回的产品，按召回公告发布日期排序</small><a class="kit-morelink" id="rc-all" href="#/list/recalls"></a></h2>
       <div class="bar"><div class="seg" id="rc-kind"></div><div class="chips" id="rc-cat"></div></div>
       <div class="panel list" id="rc-list"></div>
 
-      <h2 class="section-title" id="fails">🧪 抽检不合格 <small>监督抽检中不合格的批次，不代表该品牌所有产品都有问题</small></h2>
+      <h2 class="section-title" id="fails">🧪 抽检不合格 <small>监督抽检中不合格的批次，不代表该品牌所有产品都有问题</small><a class="kit-morelink" id="fl-all" href="#/list/fails"></a></h2>
       <div class="bar"><div class="seg" id="fl-kind"></div><div class="chips" id="fl-filter"></div></div>
       <div class="panel list" id="fl-list"></div>
 
-      <h2 class="section-title" id="tips">📢 消费提示 <small>中国消费者协会</small></h2>
+      <h2 class="section-title" id="tips">📢 消费提示 <small>中国消费者协会</small><a class="kit-morelink" id="tips-all" href="#/list/tips"></a></h2>
       <div class="panel tips" id="tips-list"></div>
     </div>
 
@@ -227,11 +326,139 @@
     <div class="panel sources" id="sources"></div>
     <p class="foot">
       数据来自国家市场监督管理总局缺陷产品召回中心、市场监管总局食品抽检通报与产品质量国家监督抽查通报、浙江省市场监督管理局食品抽检通告、中国消费者协会，每 6 小时自动抓取，保留近一年（国抽两年）。<br>
-      「不合格」只针对被抽检的那一批次，信息以原公告为准，点击条目可查看原文。召回产品可联系企业免费退换修，汽车召回可在召回中心网站按 VIN 码查询。
+      「不合格」只针对被抽检的那一批次，信息以原公告为准，点击条目可查看详情和原文。召回产品可联系企业免费退换修，汽车召回可在召回中心网站按 VIN 码查询。
     </p>
+    </div>
   </main>
 
   <script>
+// ── kit：详情抽屉 + 列表页路由（各站通用，内联在页面里）──
+// 用法：
+//   KIT.item('news', id => ({ title, sub, cover, thumb, tags:[], big, body:'<div class="kit-sec">…</div>', acts:[{text, href, pri}] }))
+//   KIT.list('news', (param, query) => { … 把列表页 HTML 写进容器 … })
+//   条目元素加 data-kit-item="news/<id>" 即可点击打开详情；「查看更多」写成 <a href="#/list/news">
+//   站点首页渲染函数里先调用 KIT.route() —— 返回 true 表示当前是列表页（已渲染），首页不用再渲染
+const KIT = (() => {
+  const items = {}, lists = {};
+  let mask, homeY = 0, fromHome = 0, lastHash = location.hash, onHome = null, listBox = null;
+  const kesc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const parse = h => {
+    const m = (h === undefined ? location.hash : h).match(/^#\/(item|list)\/([^?]+?)(?:\?(.*))?$/);
+    if (!m) return null;
+    const [type, ...rest] = m[2].split('/');
+    return { kind: m[1], type: decodeURIComponent(type), id: rest.map(decodeURIComponent).join('/'), q: new URLSearchParams(m[3] || '') };
+  };
+  function ensure() {
+    if (mask) return;
+    mask = document.createElement('div');
+    mask.className = 'kit-mask';
+    mask.innerHTML = '<div class="kit-sheet" role="dialog" aria-modal="true"></div>';
+    document.body.appendChild(mask);
+    mask.addEventListener('click', e => { if (e.target === mask || e.target.closest('[data-kit-close]')) close(); });
+  }
+  function render(d) {
+    ensure();
+    const cover = d.cover ? `<div class="kit-cover ${d.coverTall ? 'tall' : ''}" style="background-image:url('${kesc(d.cover).replace(/'/g, '%27')}')"></div>`
+      : d.coverIcon ? `<div class="kit-cover ph" style="background:${d.coverBg || 'var(--kit-hover)'}">${d.coverIcon}</div>` : '';
+    const thumb = !d.cover && !d.coverIcon && (d.thumb || d.thumbIcon)
+      ? `<div class="kit-thumb" style="${d.thumb ? `background-image:url('${kesc(d.thumb).replace(/'/g, '%27')}')` : ''}${d.thumbBg ? `;background-color:${d.thumbBg}` : ''}">${d.thumb ? '' : d.thumbIcon}</div>` : '';
+    const acts = (d.acts || []).filter(a => a && (a.href || a.onclick));
+    mask.firstElementChild.innerHTML = `<button class="kit-x" data-kit-close aria-label="关闭">✕</button>
+      <div class="kit-scroll">${cover}
+        <div class="kit-head">${thumb}<div class="kit-t"><h2>${kesc(d.title)}</h2>${d.sub ? `<div class="kit-sub">${d.sub}</div>` : ''}
+          ${(d.tags || []).filter(Boolean).length ? `<div class="kit-tags">${d.tags.filter(Boolean).join('')}</div>` : ''}${d.big ? `<div class="kit-big">${d.big}</div>` : ''}</div></div>
+        <div class="kit-body">${d.body || ''}</div></div>
+      ${acts.length ? `<div class="kit-acts">${acts.map((a, i) => a.href
+        ? `<a class="${a.pri || (i === 0 && acts.length < 3) ? 'pri' : ''}" href="${kesc(a.href)}" ${a.self ? '' : 'target="_blank" rel="noopener"'}>${a.text}</a>`
+        : `<button class="${a.pri ? 'pri' : ''}" data-kit-act="${i}">${a.text}</button>`).join('')}</div>` : ''}`;
+    acts.forEach((a, i) => { if (!a.href) { const b = mask.querySelector(`[data-kit-act="${i}"]`); if (b) b.onclick = a.onclick; } });
+    mask.querySelector('.kit-scroll').scrollTop = 0;
+    mask.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  // 打开详情：写进地址（可分享；浏览器返回 = 关闭）
+  function open(key) {
+    const target = '#/item/' + key;
+    if (location.hash === target) return show(parse(target));
+    ensure();
+    if (parse()?.kind === 'item') history.replaceState(history.state, '', target);
+    else { mask.dataset.base = location.hash; history.pushState({ kit: 1 }, '', target); }
+    lastHash = target;
+    show(parse(target));
+  }
+  function show(r) {
+    const fn = items[r.type];
+    const d = fn && fn(r.id, r.q);
+    if (!d) { close(true); return false; }
+    render(d);
+    return true;
+  }
+  function close(silent) {
+    if (!mask || !mask.classList.contains('open')) return;
+    mask.classList.remove('open');
+    document.body.style.overflow = '';
+    if (!silent && parse()?.kind === 'item') {
+      if (history.state && history.state.kit) history.back();          // 从页面里点开的：退回去
+      else { history.replaceState(null, '', mask.dataset.base || location.pathname + location.search); lastHash = location.hash; }   // 直接打开的分享链接
+    }
+  }
+  // 当前地址是列表页时渲染列表页并返回 true；首页时返回 false
+  function route(box) {
+    if (box) listBox = box;
+    const r = parse();
+    if (r && r.kind === 'list' && lists[r.type]) { lists[r.type](r.id, r.q, listBox); return true; }
+    return false;
+  }
+  // 列表页的公共外壳：返回按钮 + 标题 + 子分类 + 排序
+  function shell({ title, note, chips, sort, sortVal, body, more }) {
+    return `<div class="kit-lhead"><button class="kit-back" data-kit-back title="返回">‹</button><h2>${kesc(title)}</h2>${note ? `<small>${note}</small>` : ''}</div>
+      ${chips || sort ? `<div class="kit-lbar"><div class="kit-chips">${(chips || []).map(c => `<a class="${c.on ? 'on' : ''}" href="${kesc(c.href)}">${kesc(c.text)}${c.count != null ? `<small>${c.count}</small>` : ''}</a>`).join('')}</div>
+        ${sort ? `<select class="kit-sel" data-kit-sort>${sort.map(([v, n]) => `<option value="${kesc(v)}" ${v === sortVal ? 'selected' : ''}>${kesc(n)}</option>`).join('')}</select>` : ''}</div>` : ''}
+      ${body}${more ? `<button class="kit-more" data-kit-more>${more}</button>` : ''}`;
+  }
+  function init(home) {
+    onHome = home;
+    document.addEventListener('click', e => {
+      const t = e.target.closest('[data-kit-item],[data-kit-go],[data-kit-back]');
+      if (!t) return;
+      const inner = e.target.closest('a[href],button,input,select,label,summary');   // 卡片里的其它按钮 / 链接（关注、复制…）优先
+      if (inner && inner !== t && t.contains(inner)) return;
+      e.preventDefault();
+      if (t.dataset.kitBack !== undefined) { fromHome && history.length > fromHome ? history.go(-fromHome) : (location.hash = ''); return; }
+      open(t.dataset.kitItem || t.dataset.kitGo);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    window.addEventListener('hashchange', () => {
+      const r = parse();
+      let was = parse(lastHash), steps = 1;
+      if (was && was.kind === 'item') {                                 // 从详情离开
+        const base = mask && mask.dataset.base !== undefined ? mask.dataset.base : '';
+        if (location.hash === base) { lastHash = location.hash; close(true); return; }   // 只是关掉详情，底下页面不动
+        was = parse(base); steps = 2;                                   // 在详情里点了别的列表：按详情底下那页算，返回要退两步
+      }
+      lastHash = location.hash;
+      if (r && r.kind === 'item') { show(r); return; }
+      close(true);
+      const wasHome = !was;
+      if (r && r.kind === 'list') {
+        if (wasHome) { homeY = scrollY; fromHome = steps; }
+        onHome && onHome();
+        if (wasHome || was.type !== r.type) scrollTo(0, 0);
+      } else {
+        onHome && onHome();
+        if (fromHome) { scrollTo(0, homeY); fromHome = 0; }
+      }
+    });
+    // 直接打开带 #/item/ 的链接（比如大屏跳过来）：页面数据读完后由站点调用 KIT.boot()
+  }
+  function boot() { const r = parse(); if (r && r.kind === 'item') show(r); }
+  return { item: (t, fn) => (items[t] = fn), list: (t, fn) => (lists[t] = fn), open, close, route, shell, init, boot, parse, esc: kesc,
+    // 小工具：详情里的键值格、段落、关联列表
+    kv: rows => { const r = rows.filter(x => x && x[1] != null && x[1] !== ''); return r.length ? `<div class="kit-kv">${r.map(([k, v]) => `<div><small>${kesc(k)}</small><b title="${kesc(v)}">${kesc(v)}</b></div>`).join('')}</div>` : ''; },
+    sec: (title, html, note) => html ? `<div class="kit-sec"><h4>${title}${note ? `<small>${note}</small>` : ''}</h4>${html}</div>` : '',
+    p: t => t ? `<p class="kit-p">${kesc(t)}</p>` : '',
+  };
+})();
     const $ = s => document.querySelector(s);
     const store = {
       get(k, d) { try { const v = localStorage.getItem('rw:' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -271,9 +498,11 @@
     const plain = s => { for (const [re, t] of PLAIN) if (re.test(s || '')) return t; return ''; };
 
     let DATA = null, NOTICE = {};       // NOTICE：通报 URL → 标题（不合格条目只存 URL）
+    // 详情 id：召回取公告 URL 里的 art_ 编号；不合格取数组下标；消费提示取 URL 末尾数字
+    let RID = new Map(), RBY = {}, FID = new Map(), TID = new Map(), TBY = {}, NID = {};
     const st = {
-      rcKind: store.get('rcKind', 'consumer'), rcCat: 'all', rcMore: false,
-      flKind: store.get('flKind', 'food'), flF: 'all', flMore: false,
+      rcKind: store.get('rcKind', 'consumer'), rcCat: 'all',
+      flKind: store.get('flKind', 'food'), flF: 'all',
     };
 
     // ── 卡片 ──
@@ -293,19 +522,28 @@
       return `<span class="brand">${hl(brand, terms)}</span> ${hl(x.product, terms)}`;
     }
     const CAT_ICON = { 儿童用品: '🧸', 玩具: '🪀', 家电: '🔌', 家居日用: '🏠', 服装鞋帽: '👕', 电动车: '🛵', 灯具电器件: '💡', 文具: '✏️',
-      户外运动: '🚴', 电子数码: '📱', 美妆个护: '🧴', 汽车用品: '🚗', 汽车: '🚗' };
+      户外运动: '🚴', 电子数码: '📱', 美妆个护: '🧴', 汽车用品: '🚗', 汽车: '🚗',
+      粮油调味: '🧂', 糕点零食: '🍪', 蔬菜水果: '🥬', 饮料酒水: '🥤', 保健特膳: '💊', 其他食品: '🍽', 肉蛋水产: '🥩', 餐饮自制: '🍜', 乳制品: '🥛' };
+    // 品类色：用站点已有的语义色
+    const CAT_C = { 儿童用品: 'var(--warn)', 玩具: 'var(--warn)', 文具: 'var(--warn)', 家电: 'var(--info)', 灯具电器件: 'var(--info)', 电子数码: 'var(--info)',
+      家居日用: 'var(--good)', 户外运动: 'var(--good)', 服装鞋帽: 'var(--accent)', 美妆个护: 'var(--accent)', 电动车: 'var(--bad)', 汽车: 'var(--bad)', 汽车用品: 'var(--bad)',
+      粮油调味: 'var(--warn)', 糕点零食: 'var(--accent)', 蔬菜水果: 'var(--good)', 饮料酒水: 'var(--info)', 保健特膳: 'var(--bad)', 肉蛋水产: 'var(--bad)', 餐饮自制: 'var(--accent)', 乳制品: 'var(--info)' };
+    const catC = c => CAT_C[c] || 'var(--text-3)';
+    const icon = c => CAT_ICON[c] || '📦';
+    const icBlock = c => `<div class="ic" style="--c:${catC(c)}">${icon(c)}</div>`;
     function recallCard(x, terms) {
       const auto = x.kind === 'auto';
       const name = auto ? x.product : `${x.brand ? `<span class="brand">${hl(x.brand, terms)}</span>牌` : ''}${hl(x.product, terms)}`;
       const qty = x.qty ? `<span class="qty num">${fmtN(x.qty)}</span> ${esc(x.unit || '')}` : '';
       const meta = [hl(x.company, terms), x.province, x.model ? '型号 ' + hl(x.model, terms) : '', x.produced ? x.produced.replace(/年|月/g, '/').replace(/日/g, '') + ' 生产' : ''].filter(Boolean).join(' · ');
-      // 没有产品照片的用品类占位，保证列表左侧对齐
-      return `<a class="item has-img" href="${esc(x.url)}" target="_blank" rel="noopener">
-        ${x.img ? `<div class="pic" style="background-image:url('${esc(x.img).replace(/'/g, '%27')}')"></div>` : `<div class="pic ph">${CAT_ICON[x.cat] || '📦'}</div>`}
+      // 没有产品照片的用品类着色的小图标块
+      const id = RID.get(x);
+      return `<a class="item ${x.img ? 'has-img' : 'has-ic'}" href="#/item/rc/${id}" data-kit-item="rc/${id}">
+        ${x.img ? `<div class="pic" style="background-image:url('${esc(x.img).replace(/'/g, '%27')}')"></div>` : icBlock(x.cat)}
         <div class="item-main">
         <div class="item-top"><div class="item-title">${auto ? autoTitle(x, terms) : name}</div><div class="item-date">${esc(x.date)}</div></div>
         <div class="item-meta">${meta}</div>
-        ${x.defect ? `<div class="item-risk">${esc(x.defect.replace(/^本次召回范围内的[^，]*，/, ''))}</div>` : ''}
+        ${x.defect ? `<div class="item-risk clamp">${esc(x.defect.replace(/^本次召回范围内的[^，]*，/, ''))}</div>` : ''}
         <div class="item-foot">
           ${qty ? `<span class="badge bad">召回 ${qty}</span>` : ''}
           <span class="badge">${esc(x.cat)}</span>
@@ -314,12 +552,14 @@
           <span class="src">${auto ? '汽车召回' : '消费品召回'}${x.codes?.length ? ' · ' + esc(x.codes.join(' ')) : ''}</span>
         </div></div></a>`;
     }
+    const srcName = x => x.src === '国抽' ? '产品质量国抽' : x.src + '食品抽检';
     function failCard(x, terms) {
       const brand = x.brand ? `<span class="brand">${hl(x.brand, terms)}</span> ` : '';
       const where = [x.platform ? `${esc(x.platform)}${x.shop ? '「' + hl(x.shop, terms) + '」' : ''}` : '', hl(x.seller, terms)].filter(Boolean).join(' · ');
       const items = (x.items || '').replace(/\*/g, '');
       const p = plain(x.items);
-      return `<a class="item" href="${esc(x.url)}" target="_blank" rel="noopener">
+      const id = FID.get(x);
+      return `<a class="item has-ic" href="#/item/fl/${id}" data-kit-item="fl/${id}">${icBlock(x.cat)}<div class="item-main">
         <div class="item-top"><div class="item-title">${brand}${hl(x.product, terms)}${x.spec ? ` <small style="color:var(--text-3);font-weight:500">${esc(x.spec)}</small>` : ''}</div><div class="item-date">${esc(x.date)}</div></div>
         <div class="item-meta">${x.maker ? '标称生产：' + hl(x.maker, terms) : ''}${x.maker && where ? ' · ' : ''}${where ? '销售：' + where : ''}</div>
         <div class="item-risk"><span class="why">${hl(items, terms)}</span> 不合格${x.value ? `<small style="color:var(--text-3)">（检出 ${esc(x.value)}，标准 ${esc(x.std)}）</small>` : ''}${p ? ` — ${esc(p)}` : ''}</div>
@@ -328,8 +568,8 @@
           ${x.region && x.region !== '全国' ? `<span class="badge warn">${esc(x.region.replace(/省$/, ''))}</span>` : ''}
           ${/\*/.test(x.items || '') ? '<span class="badge bad">安全项目</span>' : ''}
           ${x.note ? `<span class="badge">${esc(x.note)}</span>` : ''}
-          <span class="src">${esc(x.src === '国抽' ? '产品质量国抽' : x.src + '食品抽检')} · ${esc((NOTICE[x.url] || '').replace(/^市场监管总局(办公厅)?关于|^浙江省市场监督管理局/, ''))}</span>
-        </div></a>`;
+          <span class="src">${esc(srcName(x))} · ${esc((NOTICE[x.url] || '').replace(/^市场监管总局(办公厅)?关于|^浙江省市场监督管理局/, ''))}</span>
+        </div></div></a>`;
     }
 
     // ── 概览 ──
@@ -362,52 +602,61 @@
       $('#hints').innerHTML = '试试：' + [...new Set(ex)].slice(0, 7).map(t => `<button data-q="${esc(t)}">${esc(t)}</button>`).join('');
     }
 
-    // ── 召回 ──
-    function renderRecalls(d) {
-      const kinds = [['consumer', '消费品'], ['auto', '汽车']];
-      const all = d.recalls.filter(x => x.kind === st.rcKind);
-      $('#rc-kind').innerHTML = kinds.map(([k, n]) => `<button class="${st.rcKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.recalls.filter(x => x.kind === k).length}</span></button>`).join('');
+    // ── 召回 ──（首页 10 条，其余进列表页 #/list/recalls?kind=&cat=）
+    const RC_KINDS = [['consumer', '消费品'], ['auto', '汽车']];
+    function rcData(kind, cat) {
+      const all = DATA.recalls.filter(x => x.kind === kind);
       const cats = {};
       all.forEach(x => cats[x.cat] = (cats[x.cat] || 0) + 1);
-      const names = st.rcKind === 'auto' ? ['all'] : ['all', ...Object.keys(cats).sort((a, b) => cats[b] - cats[a])];
-      if (!names.includes(st.rcCat)) st.rcCat = 'all';
-      $('#rc-cat').innerHTML = names.length > 1 ? names.map(c => `<button class="chip ${st.rcCat === c ? 'active' : ''}" data-c="${esc(c)}">${c === 'all' ? '全部' : esc(c)}<span class="n">${c === 'all' ? all.length : cats[c]}</span></button>`).join('') : '';
-      const list = all.filter(x => st.rcCat === 'all' || x.cat === st.rcCat);
-      const shown = st.rcMore ? list : list.slice(0, 15);
-      $('#rc-list').innerHTML = (shown.length ? shown.map(x => recallCard(x)).join('') : '<div class="empty">暂无召回</div>')
-        + (list.length > shown.length ? `<button class="more" data-more="rc">展开全部 ${list.length} 条</button>` : '');
+      const names = kind === 'auto' ? ['all'] : ['all', ...Object.keys(cats).sort((a, b) => cats[b] - cats[a])];
+      if (!names.includes(cat)) cat = 'all';
+      return { all, cats, names, cat, list: all.filter(x => cat === 'all' || x.cat === cat) };
     }
-    $('#rc-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.rcKind = b.dataset.k; st.rcCat = 'all'; st.rcMore = false; store.set('rcKind', st.rcKind); renderRecalls(DATA); });
-    $('#rc-cat').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.rcCat = b.dataset.c; st.rcMore = false; renderRecalls(DATA); });
-    $('#rc-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); st.rcMore = true; renderRecalls(DATA); } });
+    const rcHref = (k, c, sort) => `#/list/recalls?kind=${k}${c && c !== 'all' ? '&cat=' + encodeURIComponent(c) : ''}${sort && sort !== 'date' ? '&sort=' + sort : ''}`;
+    function renderRecalls(d) {
+      const r = rcData(st.rcKind, st.rcCat);
+      st.rcCat = r.cat;
+      $('#rc-kind').innerHTML = RC_KINDS.map(([k, n]) => `<button class="${st.rcKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.recalls.filter(x => x.kind === k).length}</span></button>`).join('');
+      $('#rc-cat').innerHTML = r.names.length > 1 ? r.names.map(c => `<button class="chip ${st.rcCat === c ? 'active' : ''}" data-c="${esc(c)}">${c === 'all' ? '全部' : esc(c)}<span class="n">${c === 'all' ? r.all.length : r.cats[c]}</span></button>`).join('') : '';
+      const shown = r.list.slice(0, 10), href = rcHref(st.rcKind, st.rcCat);
+      $('#rc-list').innerHTML = (shown.length ? shown.map(x => recallCard(x)).join('') : '<div class="empty">暂无召回</div>')
+        + (r.list.length > shown.length ? `<a class="more" href="${href}">查看全部 ${r.list.length} 条 →</a>` : '');
+      $('#rc-all').href = href; $('#rc-all').textContent = `全部 ${r.list.length} 条 →`;
+    }
+    $('#rc-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.rcKind = b.dataset.k; st.rcCat = 'all'; store.set('rcKind', st.rcKind); renderRecalls(DATA); });
+    $('#rc-cat').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.rcCat = b.dataset.c; renderRecalls(DATA); });
 
-    // ── 不合格 ──
-    function renderFails(d) {
-      const kinds = [['food', '食品'], ['product', '产品']];
-      const all = d.fails.filter(x => x.kind === st.flKind);
-      $('#fl-kind').innerHTML = kinds.map(([k, n]) => `<button class="${st.flKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.fails.filter(x => x.kind === k).length}</span></button>`).join('');
+    // ── 不合格 ──（首页 10 条，其余进列表页 #/list/fails?kind=&f=）
+    const FL_KINDS = [['food', '食品'], ['product', '产品']];
+    function flData(kind, f) {
+      const all = DATA.fails.filter(x => x.kind === kind);
       const filters = [['all', '全部', () => true]];
-      if (st.flKind === 'food') filters.push(['zj', '只看浙江', x => x.src === '浙江']);
+      if (kind === 'food') filters.push(['zj', '只看浙江', x => x.src === '浙江']);
       const plats = {};
       all.forEach(x => { if (x.platform) plats[x.platform] = (plats[x.platform] || 0) + 1; });
       Object.keys(plats).sort((a, b) => plats[b] - plats[a]).slice(0, 7).forEach(p => filters.push(['p:' + p, p, x => x.platform === p]));
       const cats = {};
       all.forEach(x => cats[x.cat] = (cats[x.cat] || 0) + 1);
       Object.keys(cats).sort((a, b) => cats[b] - cats[a]).forEach(c => filters.push(['c:' + c, c, x => x.cat === c]));
-      if (!filters.some(f => f[0] === st.flF)) st.flF = 'all';
-      $('#fl-filter').innerHTML = filters.map(([k, n, fn]) => `<button class="chip ${st.flF === k ? 'active' : ''}" data-f="${esc(k)}">${esc(n)}<span class="n">${all.filter(fn).length}</span></button>`).join('');
-      const fn = filters.find(f => f[0] === st.flF)[2];
-      const list = all.filter(fn);
-      const shown = st.flMore ? list : list.slice(0, 15);
-      $('#fl-list').innerHTML = (shown.length ? shown.map(x => failCard(x)).join('') : '<div class="empty">暂无不合格记录</div>')
-        + (list.length > shown.length ? `<button class="more" data-more="fl">展开全部 ${list.length} 条</button>` : '');
+      if (!filters.some(x => x[0] === f)) f = 'all';
+      return { all, filters, f, list: all.filter(filters.find(x => x[0] === f)[2]) };
     }
-    $('#fl-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.flKind = b.dataset.k; st.flF = 'all'; st.flMore = false; store.set('flKind', st.flKind); renderFails(DATA); });
-    $('#fl-filter').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.flF = b.dataset.f; st.flMore = false; renderFails(DATA); });
-    $('#fl-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); st.flMore = true; renderFails(DATA); } });
+    const flHref = (k, f) => `#/list/fails?kind=${k}${f && f !== 'all' ? '&f=' + encodeURIComponent(f) : ''}`;
+    function renderFails(d) {
+      const r = flData(st.flKind, st.flF);
+      st.flF = r.f;
+      $('#fl-kind').innerHTML = FL_KINDS.map(([k, n]) => `<button class="${st.flKind === k ? 'active' : ''}" data-k="${k}">${n} <span class="num" style="opacity:.6">${d.fails.filter(x => x.kind === k).length}</span></button>`).join('');
+      $('#fl-filter').innerHTML = r.filters.map(([k, n, fn]) => `<button class="chip ${st.flF === k ? 'active' : ''}" data-f="${esc(k)}">${esc(n)}<span class="n">${r.all.filter(fn).length}</span></button>`).join('');
+      const shown = r.list.slice(0, 10), href = flHref(st.flKind, st.flF);
+      $('#fl-list').innerHTML = (shown.length ? shown.map(x => failCard(x)).join('') : '<div class="empty">暂无不合格记录</div>')
+        + (r.list.length > shown.length ? `<a class="more" href="${href}">查看全部 ${r.list.length} 条 →</a>` : '');
+      $('#fl-all').href = href; $('#fl-all').textContent = `全部 ${r.list.length} 条 →`;
+    }
+    $('#fl-kind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.flKind = b.dataset.k; st.flF = 'all'; store.set('flKind', st.flKind); renderFails(DATA); });
+    $('#fl-filter').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; st.flF = b.dataset.f; renderFails(DATA); });
 
     // ── 搜索：空格分隔多个词，全部命中才算 ──
-    let srMore = false;
+    let srN = 30;           // 搜索结果分页：每次多显示 30 条
     function searchText(x) {
       return [x.title, x.brand, x.product, x.company, x.model, x.maker, x.seller, x.shop, x.platform, x.items, x.cat, x.group, x.province, x.region, x.defect, (x.codes || []).join(' ')].join(' ').toLowerCase();
     }
@@ -417,24 +666,26 @@
       if (!q || !DATA) { $('#search-results').hidden = true; $('#main').hidden = false; return; }
       const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
       const hit = x => { const t = searchText(x); return terms.every(w => t.includes(w)); };
-      const rc = DATA.recalls.filter(hit).map(x => ({ ...x, _t: 'r' }));
-      const fl = DATA.fails.filter(hit).map(x => ({ ...x, _t: 'f' }));
-      const all = [...rc, ...fl].sort((a, b) => b.date.localeCompare(a.date));
+      const rc = DATA.recalls.filter(hit), fl = DATA.fails.filter(hit);
+      const all = [...rc.map(x => ['r', x]), ...fl.map(x => ['f', x])].sort((a, b) => b[1].date.localeCompare(a[1].date));
       $('#sr-sub').textContent = all.length ? `召回 ${rc.length} 条 · 不合格 ${fl.length} 条` : '';
-      const shown = srMore ? all : all.slice(0, 30);
-      $('#sr-list').innerHTML = (shown.length ? shown.map(x => x._t === 'r' ? recallCard(x, terms) : failCard(x, terms)).join('')
+      const shown = all.slice(0, srN);
+      $('#sr-list').innerHTML = (shown.length ? shown.map(([t, x]) => t === 'r' ? recallCard(x, terms) : failCard(x, terms)).join('')
         : `<div class="empty">近一年的召回和抽检不合格里没有「${esc(q)}」<br><small>没出现不代表没问题，只是没被抽到或没被召回</small></div>`)
-        + (all.length > shown.length ? `<button class="more" data-more="sr">展开全部 ${all.length} 条</button>` : '');
+        + (all.length > shown.length ? `<button class="more" data-more="sr">加载更多（${shown.length} / ${all.length}）</button>` : '');
       $('#search-results').hidden = false; $('#main').hidden = true;
     }
     let timer;
-    $('#q').addEventListener('input', () => { clearTimeout(timer); srMore = false; timer = setTimeout(renderSearch, 150); });
+    $('#q').addEventListener('input', () => { clearTimeout(timer); srN = 30; timer = setTimeout(renderSearch, 150); });
     $('#clear').addEventListener('click', e => { e.preventDefault(); $('#q').value = ''; renderSearch(); $('#q').focus(); });
-    $('#hints').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return; $('#q').value = b.dataset.q; srMore = false; renderSearch(); });
-    $('#sr-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); srMore = true; renderSearch(); } });
+    $('#hints').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (!b) return; $('#q').value = b.dataset.q; srN = 30; renderSearch(); });
+    $('#sr-list').addEventListener('click', e => { if (e.target.closest('[data-more]')) { e.preventDefault(); srN += 30; renderSearch(); } });
 
+    const tipRows = list => list.map(x => `<a href="#/item/tip/${TID.get(x)}" data-kit-item="tip/${TID.get(x)}"><span>${esc(x.date)}</span><b class="tt" style="font-weight:500">${esc(x.title)}</b>${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy">` : ''}</a>`).join('') || '<div class="empty">暂无</div>';
     function renderTips(d) {
-      $('#tips-list').innerHTML = (d.tips || []).slice(0, 10).map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener"><span>${esc(x.date)}</span>${esc(x.title)}</a>`).join('') || '<div class="empty">暂无</div>';
+      const tips = d.tips || [];
+      $('#tips-list').innerHTML = tipRows(tips.slice(0, 6));
+      $('#tips-all').textContent = tips.length > 6 ? `全部 ${tips.length} 条 →` : '';
     }
     function renderSources(d) {
       const srcs = d.sources || [];
@@ -446,6 +697,113 @@
       $('#updated').textContent = `${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')} 更新` + (bad ? ` · ${bad} 个来源异常` : '');
     }
 
+    // ── 页面：首页 / 列表页（#/list/…）；锚点 #recalls 等照旧 ──
+    function render() {
+      if (!DATA) return;
+      const isList = KIT.route($('#listpage'));
+      $('#listpage').hidden = !isList; $('#home').hidden = isList;
+      if (isList) return;
+      const d = DATA;
+      renderStats(d); renderRecalls(d); renderFails(d); renderTips(d); renderSources(d); renderSearch();
+      // 从列表页点顶栏锚点回来：首页重新显示后再滚到对应栏目
+      const a = /^#[a-z]+$/.test(location.hash) && document.getElementById(location.hash.slice(1));
+      if (a) setTimeout(() => a.scrollIntoView(), 0);
+    }
+
+    // ── 详情（右侧抽屉，手机底部升起）──
+    const tag = t => t ? `<span>${esc(t)}</span>` : '';
+    const rowsOf = (list, fn) => list.length ? `<div class="kit-rows">${list.map(fn).join('')}</div>` : '';
+    const rcRow = o => `<div class="kit-row" data-kit-go="rc/${RID.get(o)}">${o.img ? `<img src="${esc(o.img)}" alt="" loading="lazy">` : ''}<span class="kit-rt">${esc(o.title)}</span><span class="kit-rm">${esc(o.date)}</span></div>`;
+    const flRow = o => `<div class="kit-row" data-kit-go="fl/${FID.get(o)}"><span class="kit-rt">${esc([o.brand, o.product].filter(Boolean).join(' '))}<br><small style="color:var(--bad)">${esc((o.items || '').replace(/\*/g, ''))}</small></span><span class="kit-rm">${esc(o.date)}</span></div>`;
+    const prod = s => s ? s.replace(/年|月/g, '/').replace(/日/g, '') : '';
+
+    KIT.item('rc', id => {
+      const x = RBY[id]; if (!x) return null;
+      const auto = x.kind === 'auto';
+      const sameCo = DATA.recalls.filter(o => o !== x && (o.company === x.company || (x.brand && o.brand === x.brand))).slice(0, 6);
+      const sameCat = DATA.recalls.filter(o => o !== x && o.kind === x.kind && o.cat === x.cat && !sameCo.includes(o)).slice(0, 6);
+      return { title: x.title, sub: `${esc(auto ? '汽车召回' : '消费品召回')} · ${esc(x.date)} 发布`,
+        cover: x.img, coverTall: true, thumbIcon: icon(x.cat), thumbBg: `color-mix(in srgb, ${catC(x.cat)} 18%, transparent)`,
+        tags: [tag(x.cat), tag(x.province), x.remedy && /免费/.test(x.remedy) ? tag('免费退换修') : ''],
+        big: x.qty ? `<b class="num">${fmtN(x.qty)}</b><span style="color:var(--text-2)">${esc(x.unit || '')} 被召回</span>` : '',
+        body: KIT.sec('召回信息', KIT.kv([['品牌', x.brand], ['生产企业', x.company], ['产品', x.product], [auto ? '召回编号' : '型号 / 批次', auto ? (x.codes || []).join(' ') : x.model],
+            ['生产日期', prod(x.produced)], ['实施日期', x.start], ['所在省份', x.province], ['发布日期', x.date]]))
+          + KIT.sec('存在的缺陷', KIT.p(x.defect))
+          + KIT.sec('整改方式', KIT.p(x.remedy))
+          + KIT.sec(`同${x.brand ? '品牌 / ' : ''}企业的其它召回`, rowsOf(sameCo, rcRow))
+          + KIT.sec(`${x.cat}的其它召回`, rowsOf(sameCat, rcRow), `<a class="kit-morelink" href="${rcHref(x.kind, auto ? 'all' : x.cat)}">全部 →</a>`),
+        acts: [{ text: '阅读召回公告 ↗', href: x.url }] };
+    });
+    KIT.item('fl', id => {
+      const x = DATA.fails[+id]; if (!x) return null;
+      const items = (x.items || '').replace(/\*/g, ''), p = plain(x.items);
+      const same = DATA.fails.filter(o => o !== x && o.url === x.url);
+      const ni = NID[x.url];
+      return { title: [x.brand, x.product].filter(Boolean).join(' '), sub: `${esc(srcName(x))} · ${esc(x.date)}`,
+        thumbIcon: icon(x.cat), thumbBg: `color-mix(in srgb, ${catC(x.cat)} 18%, transparent)`,
+        tags: [tag(x.cat), x.region && x.region !== '全国' ? tag(x.region.replace(/省$/, '')) : '', /\*/.test(x.items || '') ? tag('安全项目') : '', tag(x.note)],
+        big: `<b style="color:var(--bad);font-size:${items.length > 14 ? 18 : 24}px">${esc(items)}</b><span style="color:var(--text-2)">不合格</span>`,
+        body: KIT.sec('检验结果', KIT.kv([['实测值', x.value], ['标准值', x.std]]) + (p ? KIT.p(p) : ''))
+          + KIT.sec('产品信息', KIT.kv([['产品', x.product], ['品牌', x.brand], ['规格型号', x.spec], ['生产日期 / 批号', x.produced], ['标称生产商', x.maker],
+            ['销售方', x.seller], ['电商平台', x.platform], ['店铺', x.shop], ['分类', x.group], ['地区', x.region]]))
+          + KIT.sec('所在通报', KIT.p(NOTICE[x.url] || ''))
+          + KIT.sec(`同一通报其它不合格产品`, rowsOf(same.slice(0, 8), flRow), same.length > 8 && ni != null ? `<a class="kit-morelink" href="#/list/notice/${ni}">全部 ${same.length} 条 →</a>` : `${same.length} 条`),
+        acts: [{ text: '查看通报原文 ↗', href: x.url }] };
+    });
+    KIT.item('tip', id => {
+      const x = TBY[id]; if (!x) return null;
+      const others = DATA.tips.filter(o => o !== x).slice(0, 6);
+      return { title: x.title, sub: `中国消费者协会 · ${esc(x.date)}`, cover: x.img, thumbIcon: '📢', thumbBg: 'color-mix(in srgb, var(--accent) 18%, transparent)',
+        body: KIT.sec('正文', KIT.p(x.body || '正文请看原网页。'))
+          + KIT.sec('其它消费提示', rowsOf(others, o => `<div class="kit-row" data-kit-go="tip/${TID.get(o)}"><span class="kit-rt">${esc(o.title)}</span><span class="kit-rm">${esc(o.date)}</span></div>`), '<a class="kit-morelink" href="#/list/tips">全部 →</a>'),
+        acts: [{ text: '阅读原文 ↗', href: x.url }] };
+    });
+
+    // ── 列表页（30 条一页，加载更多）──
+    const LPAGE = 30;
+    let listN = LPAGE;
+    const more = (n, total) => total > n ? `加载更多（${n} / ${total}）` : '';
+    const segLinks = (kinds, cur, href, count) => `<div class="seg">${kinds.map(([k, n]) => `<a class="${k === cur ? 'active' : ''}" href="${href(k)}">${n} <span class="num" style="opacity:.6">${count(k)}</span></a>`).join('')}</div>`;
+    KIT.list('recalls', (_, q, box) => {
+      const kind = q.get('kind') === 'auto' ? 'auto' : 'consumer', sort = q.get('sort') === 'qty' ? 'qty' : 'date';
+      const r = rcData(kind, q.get('cat'));
+      const list = sort === 'qty' ? [...r.list].sort((a, b) => (+b.qty || 0) - (+a.qty || 0)) : r.list;
+      box.innerHTML = KIT.shell({ title: '缺陷产品召回', note: `${list.length} 条 · 近一年`,
+        body: `<div class="bar">${segLinks(RC_KINDS, kind, k => rcHref(k), k => DATA.recalls.filter(x => x.kind === k).length)}
+            ${r.names.length > 1 ? `<div class="chips">${r.names.map(c => `<a class="chip ${r.cat === c ? 'active' : ''}" href="${rcHref(kind, c, sort)}">${c === 'all' ? '全部' : esc(c)}<span class="n">${c === 'all' ? r.all.length : r.cats[c]}</span></a>`).join('')}</div>` : ''}
+            <select class="kit-sel" data-kit-sort><option value="date">按发布日期</option><option value="qty" ${sort === 'qty' ? 'selected' : ''}>按召回数量</option></select></div>
+          <div class="panel list">${list.slice(0, listN).map(x => recallCard(x)).join('') || '<div class="empty">暂无召回</div>'}</div>`,
+        more: more(listN, list.length) });
+    });
+    KIT.list('fails', (_, q, box) => {
+      const kind = q.get('kind') === 'product' ? 'product' : 'food';
+      const r = flData(kind, q.get('f'));
+      box.innerHTML = KIT.shell({ title: '抽检不合格', note: `${r.list.length} 批 · 不代表该品牌所有产品都有问题`,
+        body: `<div class="bar">${segLinks(FL_KINDS, kind, k => flHref(k), k => DATA.fails.filter(x => x.kind === k).length)}
+            <div class="chips">${r.filters.map(([k, n, fn]) => `<a class="chip ${r.f === k ? 'active' : ''}" href="${flHref(kind, k)}">${esc(n)}<span class="n">${r.all.filter(fn).length}</span></a>`).join('')}</div></div>
+          <div class="panel list">${r.list.slice(0, listN).map(x => failCard(x)).join('') || '<div class="empty">暂无不合格记录</div>'}</div>`,
+        more: more(listN, r.list.length) });
+    });
+    KIT.list('notice', (id, q, box) => {
+      const n = DATA.notices[+id];
+      const list = n ? DATA.fails.filter(x => x.url === n.url) : [];
+      box.innerHTML = KIT.shell({ title: n ? n.title : '通报', note: n ? `${n.date} · ${list.length} 批不合格` : '',
+        body: `<div class="panel list">${list.slice(0, listN).map(x => failCard(x)).join('') || '<div class="empty">暂无</div>'}</div>`, more: more(listN, list.length) });
+    });
+    KIT.list('tips', (_, q, box) => {
+      const tips = DATA.tips || [];
+      box.innerHTML = KIT.shell({ title: '消费提示', note: `中国消费者协会 · ${tips.length} 条`,
+        body: `<div class="panel tips">${tipRows(tips.slice(0, listN))}</div>`, more: more(listN, tips.length) });
+    });
+    document.addEventListener('click', e => { if (e.target.closest('[data-kit-more]')) { listN += LPAGE; render(); } });
+    document.addEventListener('change', e => {
+      if (!e.target.matches('[data-kit-sort]')) return;
+      const r = KIT.parse(); if (!r) return;
+      r.q.set('sort', e.target.value);
+      location.hash = `#/list/${r.type}${r.id ? '/' + r.id : ''}?${r.q}`;
+    });
+    window.addEventListener('hashchange', () => { if (KIT.parse()?.kind !== 'item') listN = LPAGE; }, true);
+
     async function load() {
       const btn = $('#reload');
       btn.classList.add('spin');
@@ -454,7 +812,14 @@
         const d = await fetch('data.json', { cache: 'no-cache' }).then(r => r.json());
         DATA = d;
         NOTICE = Object.fromEntries((d.notices || []).map(n => [n.url, n.title]));
-        renderStats(d); renderRecalls(d); renderFails(d); renderTips(d); renderSources(d); renderSearch();
+        NID = Object.fromEntries((d.notices || []).map((n, i) => [n.url, i]));
+        RID = new Map(d.recalls.map((x, i) => [x, (x.url.match(/art_(\w+)\.html/) || [])[1] || 'i' + i]));
+        RBY = {}; RID.forEach((id, x) => RBY[id] = x);
+        FID = new Map(d.fails.map((x, i) => [x, i]));
+        TID = new Map((d.tips || []).map((x, i) => [x, (x.url.match(/(\d+)\.html/) || [])[1] || 'i' + i]));
+        TBY = {}; TID.forEach((id, x) => TBY[id] = x);
+        render();
+        KIT.boot();
       } catch (e) {
         if (!DATA) $('#updated').textContent = '数据加载失败';
         console.error(e);
@@ -470,6 +835,7 @@
       applyTheme(t); store.set('theme', t);
     });
     $('#reload').addEventListener('click', load);
+    KIT.init(render);
     load();
   </script>
 </body>

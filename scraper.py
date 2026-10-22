@@ -459,13 +459,43 @@ def parse_guochou(date_s, title, url):
 
 
 # ── 中消协消费警示 ───────────────────────────────────────
-def cca_tips():
+def cca_article(url):
+    """消费提示详情页 → (正文, 首图)。正文在 id="content" 里，取到页脚注释为止。"""
+    h = fetch(url)
+    i = h.find('id="content"')
+    if i < 0:
+        return "", ""
+    h = h[i:]
+    j = h.find("<!--底部开始-->")
+    if j > 0:
+        h = h[:j]
+    img = ""
+    for src in re.findall(r'<img[^>]+src="([^"]+)"', h):
+        if "/template/" not in src and not IMG_SKIP.search(src):
+            img = urllib.parse.urljoin(url, html.unescape(src))
+            break
+    lines = page_text(h[h.find(">") + 1:])
+    return "\n".join(lines)[:3000], img
+
+
+def cca_tips(old_tips=()):
     out = []
     for page in ("11188.html", "11188_2.html"):
         t = fetch(f"https://cca.org.cn/channel/list/{page}")
         for href, d, title in re.findall(
                 r'<a href="(https://cca\.org\.cn/single/\d+/\d+\.html)">\s*<span[^>]*>\s*([\d.]+)\s*</span>\s*([^<]+?)\s*</a>', t):
             out.append({"date": d.replace(".", "-"), "title": clean(title), "url": href})
+        time.sleep(PAUSE)
+    # 正文和首图：抓过的沿用（按 url 缓存），单条失败下次再抓
+    cache = {x["url"]: x for x in old_tips if "body" in x}
+    for x in out:
+        if x["url"] in cache:
+            x["body"], x["img"] = cache[x["url"]]["body"], cache[x["url"]].get("img", "")
+            continue
+        try:
+            x["body"], x["img"] = cca_article(x["url"])
+        except Exception as e:
+            print(f"  ! 提示正文 {x['title'][:20]} {type(e).__name__}")
         time.sleep(PAUSE)
     return out
 
@@ -536,7 +566,7 @@ def main():
         lambda x: x["src"] == "国抽",
         title_ok=lambda t: "国家监督抽查" in t, is_notice=True, keep_days=KEEP_DAYS_GUOCHOU)
     try:
-        tips = cca_tips()
+        tips = cca_tips(old.get("tips", []))
         sources.append({"id": "cca", "name": "中消协消费警示", "ok": True, "added": 0, "count": len(tips),
                         "updated": now_cst().isoformat(timespec="seconds")})
         print(f"✓ 中消协消费警示: {len(tips)}")
