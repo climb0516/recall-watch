@@ -503,7 +503,7 @@ const KIT = (() => {
 
     let DATA = null, NOTICE = {};       // NOTICE：通报 URL → 标题（不合格条目只存 URL）
     // 详情 id：召回取公告 URL 里的 art_ 编号；不合格取数组下标；消费提示取 URL 末尾数字
-    let RID = new Map(), RBY = {}, FID = new Map(), TID = new Map(), TBY = {}, NID = {};
+    let RID = new Map(), RBY = {}, FID = new Map(), FBY = {}, TID = new Map(), TBY = {}, NID = {};
     const st = {
       rcKind: store.get('rcKind', 'consumer'), rcCat: 'all',
       flKind: store.get('flKind', 'food'), flF: 'all',
@@ -739,7 +739,7 @@ const KIT = (() => {
         acts: [{ text: '阅读召回公告 ↗', href: x.url }] };
     });
     KIT.item('fl', id => {
-      const x = DATA.fails[+id]; if (!x) return null;
+      const x = FBY[id] || (/^\d+$/.test(id) ? DATA.fails[+id] : null); if (!x) return null;   // 纯数字是旧链接（数组下标），尽量兼容
       const items = (x.items || '').replace(/\*/g, ''), p = plain(x.items);
       const same = DATA.fails.filter(o => o !== x && o.url === x.url);
       const ni = NID[x.url];
@@ -819,7 +819,10 @@ const KIT = (() => {
         NID = Object.fromEntries((d.notices || []).map((n, i) => [n.url, i]));
         RID = new Map(d.recalls.map((x, i) => [x, (x.url.match(/art_(\w+)\.html/) || [])[1] || 'i' + i]));
         RBY = {}; RID.forEach((id, x) => RBY[id] = x);
-        FID = new Map(d.fails.map((x, i) => [x, i]));
+        // 不合格条目没有官方编号：用内容生成稳定 id（数据更新、顺序变化后分享链接仍指向同一条）
+  const hid = str => { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); };
+  FID = new Map(); FBY = {};
+  d.fails.forEach(x => { let k = 'f' + hid([x.date, x.src, x.product, x.brand, x.maker, x.items].join('|')); while (FBY[k]) k += 'x'; FID.set(x, k); FBY[k] = x; });
         TID = new Map((d.tips || []).map((x, i) => [x, (x.url.match(/(\d+)\.html/) || [])[1] || 'i' + i]));
         TBY = {}; TID.forEach((id, x) => TBY[id] = x);
         render();
