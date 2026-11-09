@@ -241,6 +241,19 @@
     .kit-back { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--kit-line2); background: transparent; color: var(--kit-t1);
       font-size: 20px; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
     .kit-back:hover { background: var(--kit-hover); }
+    /* 列表页：新开一层从右侧滑入盖在首页上，返回时滑走；首页一直在底下不动（滚动位置不变） */
+    html { scrollbar-gutter: stable; }
+    html.kit-layered { overflow: hidden; }
+    .kit-dim { position: fixed; inset: 0; z-index: 79; background: rgba(0,0,0,.45); opacity: 0; pointer-events: none; transition: opacity .34s ease; }
+    .kit-dim.on { opacity: 1; }
+    .kit-layer { position: fixed; inset: 0; z-index: 80; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+      background: var(--kit-pagebg, var(--kit-bg)); box-shadow: -12px 0 32px rgba(0,0,0,.3); transform: translateX(100%); visibility: hidden;
+      transition: transform .34s cubic-bezier(.2,.8,.2,1), visibility 0s linear .34s; }
+    .kit-layer.in { transform: none; visibility: visible; transition: transform .34s cubic-bezier(.2,.8,.2,1); }
+    .kit-layer.noanim, .kit-layer.dragging { transition: none; }
+    .kit-lview { margin: 0 auto; padding: 0 16px 48px; box-sizing: border-box; }
+    .kit-layer .kit-lhead { position: sticky; top: 0; z-index: 5; margin: 0 -16px 12px; padding: 12px 16px; background: var(--kit-pagebg, var(--kit-bg)); border-bottom: 1px solid var(--kit-line); }
+    @media (prefers-reduced-motion: reduce) { .kit-layer, .kit-dim { transition: none; } }
     .kit-lhead h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
     .kit-lhead small { color: var(--kit-t3); font-size: 12.5px; margin-left: 2px; }
     .kit-lbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -342,7 +355,10 @@
 //   站点首页渲染函数里先调用 KIT.route() —— 返回 true 表示当前是列表页（已渲染），首页不用再渲染
 const KIT = (() => {
   const items = {}, lists = {};
-  let mask, homeY = 0, fromHome = 0, lastHash = location.hash, onHome = null, listBox = null;
+  let mask, fromHome = 0, lastHash = location.hash, onHome = null, listBox = null;
+  // 列表页叠层：layer 盖在首页上，lview 是列表内容；nav = 本次渲染由地址变化触发（才播滑入 / 滑出）
+  let layer, lview, dim, layerType = null, nav = false, swiped = false;
+  const back = () => { fromHome && history.length > fromHome ? history.go(-fromHome) : (location.hash = ''); };
   const kesc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const parse = h => {
     const m = (h === undefined ? location.hash : h).match(/^#\/(item|list)\/([^?]+?)(?:\?(.*))?$/);
@@ -407,11 +423,92 @@ const KIT = (() => {
     }
   }
   // 当前地址是列表页时渲染列表页并返回 true；首页时返回 false
+  // 站点渲染首页时调用：当前地址是列表页就把列表画进叠层（打开或更新），否则收起叠层
+  // 始终返回 false —— 首页照常渲染在底下，叠层盖在上面
   function route(box) {
     if (box) listBox = box;
-    const r = parse();
-    if (r && r.kind === 'list' && lists[r.type]) { lists[r.type](r.id, r.q, listBox); return true; }
+    let r = parse();
+    if (r && r.kind === 'item') r = mask && mask.classList.contains('open') && mask.dataset.base ? parse(mask.dataset.base) : null;   // 详情抽屉底下的那页
+    if (r && r.kind === 'list' && lists[r.type]) showList(r); else hideList();
     return false;
+  }
+  const pageBg = () => {
+    for (const el of [document.body, document.documentElement]) {
+      const c = getComputedStyle(el).backgroundColor;
+      if (c && c !== 'transparent' && !/,\s*0\)$/.test(c)) return c;
+    }
+    return '';
+  };
+  const innerW = el => {
+    if (!el) return 0;
+    const hid = getComputedStyle(el).display === 'none', old = el.style.cssText;
+    if (hid) el.style.cssText += ';display:block !important;visibility:hidden !important;position:absolute !important;left:0;right:0';   // 隐藏的列表容器：临时显示出来量宽度
+    let w = el.getBoundingClientRect().width;
+    if (hid) { const pw = el.parentElement ? el.parentElement.getBoundingClientRect().width : w; const mw = parseFloat(getComputedStyle(el).maxWidth); w = Math.min(pw, isNaN(mw) ? pw : mw); el.style.cssText = old; }
+    if (!w) return 0;
+    const cs = getComputedStyle(el); return w - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  };
+  function ensureLayer() {
+    if (layer) return;
+    dim = document.createElement('div'); dim.className = 'kit-dim';
+    layer = document.createElement('div'); layer.className = 'kit-layer';
+    layer.innerHTML = '<div class="kit-lview"></div>';
+    lview = layer.firstElementChild;
+    document.body.append(dim, layer);
+    swipeBack();
+  }
+  function showList(r) {
+    ensureLayer();
+    const opening = !layer.classList.contains('in'), changed = r.type !== layerType;
+    layerType = r.type;
+    const w = innerW(listBox) || innerW(listBox && listBox.parentElement);      // 列表内容宽度和首页正文一致
+    lview.style.maxWidth = w ? Math.ceil(w + 32) + 'px' : '';
+    const bg = pageBg(); if (bg) layer.style.setProperty('--kit-pagebg', bg);
+    lists[r.type](r.id, r.q, lview);
+    if (opening || changed) layer.scrollTop = 0;
+    if (!opening) return;
+    document.documentElement.classList.add('kit-layered');
+    if (nav) { void layer.offsetWidth; requestAnimationFrame(() => { layer.classList.add('in'); dim.classList.add('on'); }); }
+    else { layer.classList.add('noanim', 'in'); dim.classList.add('on'); void layer.offsetWidth; layer.classList.remove('noanim'); }   // 直接打开的链接：不播进场
+    console.debug('[Kit] 打开列表层', r.type);
+  }
+  function hideList() {
+    if (!layer || !layer.classList.contains('in')) return;
+    const anim = nav && !swiped;
+    swiped = false; layerType = null;
+    if (!anim) layer.classList.add('noanim');
+    layer.classList.remove('in'); layer.style.transform = ''; dim.classList.remove('on');
+    document.documentElement.classList.remove('kit-layered');
+    const clear = () => { if (!layer.classList.contains('in')) lview.innerHTML = ''; };
+    if (anim) setTimeout(clear, 400); else { clear(); void layer.offsetWidth; layer.classList.remove('noanim'); }
+    console.debug('[Kit] 关闭列表层');
+  }
+  // 手机右滑返回（安卓）：从左边缘向右拖动列表层，跟手，拖过三分之一或快速一划就返回；iOS 有系统手势，让给系统
+  function swipeBack() {
+    if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return;
+    let x0 = null, y0 = 0, dx = 0, t0 = 0, active = false;
+    layer.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1 || (mask && mask.classList.contains('open'))) return;
+      const t = e.touches[0]; if (t.clientX > 28) return;
+      x0 = t.clientX; y0 = t.clientY; dx = 0; t0 = Date.now(); active = false;
+    }, { passive: true });
+    layer.addEventListener('touchmove', e => {
+      if (x0 == null) return;
+      const t = e.touches[0]; dx = Math.max(0, t.clientX - x0);
+      if (!active) {
+        if (Math.abs(t.clientY - y0) > 12 && Math.abs(t.clientY - y0) > dx) { x0 = null; return; }
+        if (dx < 10) return;
+        active = true; layer.classList.add('dragging');
+      }
+      layer.style.transform = `translateX(${dx}px)`;
+    }, { passive: true });
+    layer.addEventListener('touchend', () => {
+      if (x0 == null) return;
+      const done = active && (dx > innerWidth / 3 || (dx > 60 && dx / (Date.now() - t0) > 0.5));
+      x0 = null; layer.classList.remove('dragging');
+      if (done) { layer.style.transform = `translateX(${innerWidth}px)`; swiped = true; setTimeout(back, 220); }
+      else layer.style.transform = '';
+    });
   }
   // 列表页的公共外壳：返回按钮 + 标题 + 子分类 + 排序
   function shell({ title, note, chips, sort, sortVal, body, more }) {
@@ -428,7 +525,7 @@ const KIT = (() => {
       const inner = e.target.closest('a[href],button,input,select,label,summary');   // 卡片里的其它按钮 / 链接（关注、复制…）优先
       if (inner && inner !== t && t.contains(inner)) return;
       e.preventDefault();
-      if (t.dataset.kitBack !== undefined) { fromHome && history.length > fromHome ? history.go(-fromHome) : (location.hash = ''); return; }
+      if (t.dataset.kitBack !== undefined) { back(); return; }
       open(t.dataset.kitItem || t.dataset.kitGo);
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
@@ -443,15 +540,10 @@ const KIT = (() => {
       lastHash = location.hash;
       if (r && r.kind === 'item') { show(r); return; }
       close(true);
-      const wasHome = !was;
-      if (r && r.kind === 'list') {
-        if (wasHome) { homeY = scrollY; fromHome = steps; }
-        onHome && onHome();
-        if (wasHome || was.type !== r.type) scrollTo(0, 0);
-      } else {
-        onHome && onHome();
-        if (fromHome) { scrollTo(0, homeY); fromHome = 0; }
-      }
+      if (r && r.kind === 'list') { if (!was) fromHome = steps; }    // 从首页进来：返回按钮退回这么多步
+      else fromHome = 0;
+      nav = true;                                                     // 首页不用滚动：列表在叠层里，首页一直原样在底下
+      try { onHome && onHome(); if (!(r && r.kind === 'list')) hideList(); } finally { nav = false; }   // 站点没重画首页时也要收起列表层
     });
     // 直接打开带 #/item/ 的链接（比如大屏跳过来）：页面数据读完后由站点调用 KIT.boot()
   }

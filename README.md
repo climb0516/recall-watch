@@ -297,3 +297,7 @@ python3 -m http.server 8812
 - workflow 名为「Recall Watch Scraper」，`concurrency: scrape` 且不取消进行中的任务，同一时间只跑一个；超时 60 分钟。
 - 运行后只 `git add data.json`，有变化才 commit（提交信息 `data: update <北京时间>`），再 `git pull --rebase` 后 push。
 - **心跳**：`data.json` 的 `updated` 字段每次运行都会变，所以每次都会产生提交，仓库保持活跃。GitHub 会在仓库 60 天无提交时自动停用定时任务；如果抓取连续失败到不再提交，需在 Actions 页面重新启用。
+
+## 列表页切换
+
+列表页是新开的一层：从右侧滑入盖在首页上，返回时滑走；首页一直在底下不动，滚动位置不变。在列表里点开的详情盖在这一层之上；直接打开列表链接时不播进场动画；安卓手机可从左边缘右滑返回（iOS 用系统自带手势）。
